@@ -15,9 +15,10 @@ func TestFull(*testing.T) {
 		return
 	} else {
 		fmt.Println("Summary packet:")
-		err = p.GetPacket()
+		packet, err := p.GetPacket()
 		if err != nil {
 			fmt.Println(err)
 		}
+		fmt.Println(packet)
 	}
 }

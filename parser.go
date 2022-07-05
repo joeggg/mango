@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math"
 	"os"
+
+	"github.com/golang/snappy"
 )
 
 var (
@@ -19,6 +21,14 @@ var (
 
 type ReplayParser struct {
 	file *os.File
+}
+
+type Packet struct {
+	Kind         int
+	Tick         int
+	Size         int
+	IsCompressed bool
+	Message      []byte
 }
 
 func NewReplayParser(filename string) (*ReplayParser, error) {
@@ -46,34 +56,26 @@ func (r *ReplayParser) Initialise() error {
 	return nil
 }
 
-func (r *ReplayParser) GetPacket() error {
-	kind, err := r.readVarint32()
-	if err != nil {
-		return err
+func (r *ReplayParser) GetPacket() (*Packet, error) {
+	if kind, err := r.readVarint32(); err != nil {
+		return nil, err
+	} else if tick, err := r.readVarint32(); err != nil {
+		return nil, err
+	} else if size, err := r.readVarint32(); err != nil {
+		return nil, err
+	} else {
+		message := r.readBytes(size)
+		isCompressed := (kind & compressedMask) > 0
+		if isCompressed {
+			kind &= ^compressedMask
+			decompMessage, err := snappy.Decode(nil, message)
+			if err != nil {
+				return nil, err
+			}
+			return &Packet{kind, tick, size, isCompressed, decompMessage}, nil
+		}
+		return &Packet{kind, tick, size, isCompressed, message}, nil
 	}
-
-	isCompressed := (kind & compressedMask) > 0
-	if isCompressed {
-		kind &= ^compressedMask
-	}
-	fmt.Printf("Kind: %v\n", kind)
-	fmt.Printf("comp: %v\n", isCompressed)
-
-	tick, err := r.readVarint32()
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Tick: %v\n", tick)
-
-	size, err := r.readVarint32()
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Size: %v\n", size)
-
-	message := r.readBytes(size)
-	fmt.Printf("Message: %v\n", message)
-	return nil
 }
 
 func (r *ReplayParser) readVarint32() (int, error) {
