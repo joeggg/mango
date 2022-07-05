@@ -4,10 +4,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"mango/pb"
 	"math"
 	"os"
 
 	"github.com/golang/snappy"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -52,6 +54,20 @@ func (r *ReplayParser) Initialise() error {
 	fmt.Printf("Offset: %d\n", offset)
 	if _, err := r.file.Seek(int64(offset), 0); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (p *Packet) Parse() error {
+	if pb.EDemoCommands(p.Kind) == pb.EDemoCommands_DEM_FileInfo {
+		data := &pb.CDemoFileInfo{}
+		err := proto.Unmarshal(p.Message, data)
+		if err != nil {
+			return err
+		}
+		fmt.Println(data)
+	} else {
+		return errors.New("unknown protobuf type")
 	}
 	return nil
 }

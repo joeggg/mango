@@ -20,5 +20,9 @@ func TestFull(*testing.T) {
 			fmt.Println(err)
 		}
 		fmt.Println(packet)
+		err = packet.Parse()
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
