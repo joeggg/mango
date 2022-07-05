@@ -65,7 +65,7 @@ func (p *Packet) Parse() error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(data)
+		PrintStruct(data)
 	} else {
 		return errors.New("unknown protobuf type")
 	}
