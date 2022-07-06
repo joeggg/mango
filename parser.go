@@ -3,7 +3,6 @@ package mango
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"mango/pb"
 	"math"
 	"os"
@@ -52,20 +51,18 @@ func (r *ReplayParser) Initialise() error {
 	}
 	// Offset handling
 	r.offset = int64(r.readUint32())
-	fmt.Printf("Offset: %d\n", r.offset)
 	return nil
 }
 
-func (r *ReplayParser) GetSummary() error {
+func (r *ReplayParser) GetSummary() (proto.Message, error) {
 	if _, err := r.file.Seek(r.offset, 0); err != nil {
-		return err
+		return nil, err
 	} else if packet, err := r.GetPacket(); err != nil {
-		return err
+		return nil, err
 	} else if summary, err := packet.Parse(); err != nil {
-		return err
+		return nil, err
 	} else {
-		PrintStruct(summary)
-		return nil
+		return summary, nil
 	}
 }
 
