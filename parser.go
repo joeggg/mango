@@ -22,7 +22,8 @@ var (
 )
 
 type ReplayParser struct {
-	file *os.File
+	file   *os.File
+	offset int64
 }
 
 type Packet struct {
@@ -50,26 +51,35 @@ func (r *ReplayParser) Initialise() error {
 		return errors.New("failed to read header")
 	}
 	// Offset handling
-	offset := r.readUint32()
-	fmt.Printf("Offset: %d\n", offset)
-	if _, err := r.file.Seek(int64(offset), 0); err != nil {
-		return err
-	}
+	r.offset = int64(r.readUint32())
+	fmt.Printf("Offset: %d\n", r.offset)
 	return nil
 }
 
-func (p *Packet) Parse() error {
+func (r *ReplayParser) GetSummary() error {
+	if _, err := r.file.Seek(r.offset, 0); err != nil {
+		return err
+	} else if packet, err := r.GetPacket(); err != nil {
+		return err
+	} else if summary, err := packet.Parse(); err != nil {
+		return err
+	} else {
+		PrintStruct(summary)
+		return nil
+	}
+}
+
+func (p *Packet) Parse() (proto.Message, error) {
 	if pb.EDemoCommands(p.Kind) == pb.EDemoCommands_DEM_FileInfo {
 		data := &pb.CDemoFileInfo{}
 		err := proto.Unmarshal(p.Message, data)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		PrintStruct(data)
+		return data, nil
 	} else {
-		return errors.New("unknown protobuf type")
+		return nil, errors.New("unknown protobuf type")
 	}
-	return nil
 }
 
 func (r *ReplayParser) GetPacket() (*Packet, error) {
