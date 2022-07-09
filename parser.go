@@ -3,7 +3,8 @@ package mango
 import (
 	"encoding/binary"
 	"errors"
-	"mango/pb"
+	"fmt"
+	"io"
 	"math"
 	"os"
 
@@ -21,16 +22,7 @@ var (
 )
 
 type ReplayParser struct {
-	file   *os.File
-	offset int64
-}
-
-type Packet struct {
-	Kind         int
-	Tick         int
-	Size         int
-	IsCompressed bool
-	Message      []byte
+	file *os.File
 }
 
 func NewReplayParser(filename string) (*ReplayParser, error) {
@@ -46,16 +38,17 @@ func NewReplayParser(filename string) (*ReplayParser, error) {
 
 func (r *ReplayParser) Initialise() error {
 	// Header handling
-	if r.readString(headerLength) != header {
+	if data, _ := r.readString(headerLength); data != header {
 		return errors.New("failed to read header")
 	}
-	// Offset handling
-	r.offset = int64(r.readUint32())
 	return nil
 }
 
 func (r *ReplayParser) GetSummary() (proto.Message, error) {
-	if _, err := r.file.Seek(r.offset, 0); err != nil {
+	// Offset handling
+	if offset, err := r.readUint32(); err != nil {
+		return nil, err
+	} else if _, err = r.file.Seek(int64(offset), 0); err != nil {
 		return nil, err
 	} else if packet, err := r.GetPacket(); err != nil {
 		return nil, err
@@ -66,16 +59,17 @@ func (r *ReplayParser) GetSummary() (proto.Message, error) {
 	}
 }
 
-func (p *Packet) Parse() (proto.Message, error) {
-	if pb.EDemoCommands(p.Kind) == pb.EDemoCommands_DEM_FileInfo {
-		data := &pb.CDemoFileInfo{}
-		err := proto.Unmarshal(p.Message, data)
+func (r *ReplayParser) ParseReplay() error {
+	r.readBytes(headerLength)
+	for {
+		p, err := r.GetPacket()
 		if err != nil {
-			return nil, err
+			if err != io.EOF {
+				return err
+			}
+			return nil
 		}
-		return data, nil
-	} else {
-		return nil, errors.New("unknown protobuf type")
+		fmt.Println(p.Kind, p.Tick, p.Size, p.IsCompressed)
 	}
 }
 
@@ -86,8 +80,9 @@ func (r *ReplayParser) GetPacket() (*Packet, error) {
 		return nil, err
 	} else if size, err := r.readVarint32(); err != nil {
 		return nil, err
+	} else if message, err := r.readBytes(size); err != nil {
+		return nil, err
 	} else {
-		message := r.readBytes(size)
 		isCompressed := (kind & compressedMask) > 0
 		if isCompressed {
 			kind &= ^compressedMask
@@ -104,8 +99,11 @@ func (r *ReplayParser) GetPacket() (*Packet, error) {
 func (r *ReplayParser) readVarint32() (int, error) {
 	total, shift := 0, 0
 	for {
-		current := int(r.readByte())
-		total |= (current & 0x7F) << shift
+		current, err := r.readByte()
+		if err != nil {
+			return total, err
+		}
+		total |= (int(current) & 0x7F) << shift
 
 		if current&0x80 == 0 {
 			return total & varintMask, nil
@@ -118,23 +116,23 @@ func (r *ReplayParser) readVarint32() (int, error) {
 	}
 }
 
-func (r *ReplayParser) readUint32() uint32 {
-	return binary.LittleEndian.Uint32(r.readBytes(4))
+func (r *ReplayParser) readUint32() (uint32, error) {
+	data, err := r.readBytes(4)
+	return binary.LittleEndian.Uint32(data), err
 }
 
-func (r *ReplayParser) readString(size int) string {
-	return string(r.readBytes(size))
+func (r *ReplayParser) readString(size int) (string, error) {
+	data, err := r.readBytes(size)
+	return string(data), err
 }
 
-func (r *ReplayParser) readByte() byte {
-	return r.readBytes(1)[0]
+func (r *ReplayParser) readByte() (byte, error) {
+	data, err := r.readBytes(1)
+	return data[0], err
 }
 
-func (r *ReplayParser) readBytes(size int) (data []byte) {
+func (r *ReplayParser) readBytes(size int) (data []byte, err error) {
 	data = make([]byte, size)
-	_, err := r.file.Read(data)
-	if err != nil {
-		panic(err)
-	}
+	_, err = r.file.Read(data)
 	return
 }
