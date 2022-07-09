@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mango/pb"
 	"math"
 	"os"
 
@@ -61,7 +62,7 @@ func (r *ReplayParser) GetSummary() (proto.Message, error) {
 
 func (r *ReplayParser) ParseReplay() error {
 	r.readBytes(headerLength)
-	for {
+	for i := 0; i < 10; i++ {
 		p, err := r.GetPacket()
 		if err != nil {
 			if err != io.EOF {
@@ -69,8 +70,20 @@ func (r *ReplayParser) ParseReplay() error {
 			}
 			return nil
 		}
-		fmt.Println(p.Kind, p.Tick, p.Size, p.IsCompressed)
+		res, err := p.Parse()
+		if err != nil {
+			return err
+		}
+		if p.Size < 1000 {
+			fmt.Println(pb.EDemoCommands(p.Kind))
+			PrintStruct(res)
+
+		} else {
+			fmt.Println("- Too large to show :(")
+		}
+		fmt.Println()
 	}
+	return nil
 }
 
 func (r *ReplayParser) GetPacket() (*Packet, error) {
@@ -84,15 +97,21 @@ func (r *ReplayParser) GetPacket() (*Packet, error) {
 		return nil, err
 	} else {
 		isCompressed := (kind & compressedMask) > 0
+		packet := &Packet{
+			Kind:         kind,
+			Tick:         tick,
+			Size:         size,
+			IsCompressed: isCompressed,
+			Message:      message,
+		}
 		if isCompressed {
-			kind &= ^compressedMask
-			decompMessage, err := snappy.Decode(nil, message)
+			packet.Kind &= ^compressedMask
+			packet.Message, err = snappy.Decode(nil, message)
 			if err != nil {
 				return nil, err
 			}
-			return &Packet{kind, tick, size, isCompressed, decompMessage}, nil
 		}
-		return &Packet{kind, tick, size, isCompressed, message}, nil
+		return packet, nil
 	}
 }
 
