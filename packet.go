@@ -60,13 +60,7 @@ func (p *Packet) Parse() (proto.Message, error) {
 		err := proto.Unmarshal(p.Message, result)
 		return result, err
 
-	case pb.EDemoCommands_DEM_Packet:
-		result := &pb.CDemoPacket{}
-		err := proto.Unmarshal(p.Message, result)
-		fmt.Println(result.Data[0])
-		return result, err
-
-	case pb.EDemoCommands_DEM_SignonPacket:
+	case pb.EDemoCommands_DEM_Packet, pb.EDemoCommands_DEM_SignonPacket:
 		result := &pb.CDemoPacket{}
 		err := proto.Unmarshal(p.Message, result)
 		return result, err
