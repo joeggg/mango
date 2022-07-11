@@ -6,8 +6,10 @@ import (
 	"testing"
 )
 
+const testReplayFilename = "example_data/test.dem"
+
 func TestSummary(t *testing.T) {
-	if p, err := mango.NewReplayParser("example_data/test.dem"); err != nil {
+	if p, err := mango.NewReplayParser(testReplayFilename); err != nil {
 		t.Error(err)
 	} else if err = p.Initialise(); err != nil {
 		t.Error(err)
@@ -23,19 +25,24 @@ func TestSummary(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	if p, err := mango.NewReplayParser("example_data/test.dem"); err != nil {
+	if p, err := mango.NewReplayParser(testReplayFilename); err != nil {
 		t.Error(err)
 	} else if err = p.Initialise(); err != nil {
 		t.Error(err)
+	} else if packets, err := p.ParseReplay(); err != nil {
+		t.Error(err)
 	} else {
-
-		err = p.ParseReplay()
-		if err != nil {
-			t.Error(err)
-		}
-		err = mango.PrintStruct(p)
-		if err != nil {
-			t.Error(err)
+		for _, packet := range packets {
+			fmt.Println(packet.Command)
+			if packet.Size < 1000 {
+				err = mango.PrintStruct(packet.Message)
+				if err != nil {
+					t.Error(err)
+				}
+			} else {
+				fmt.Println("Too big to show :(")
+			}
+			fmt.Println()
 		}
 	}
 }

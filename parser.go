@@ -3,9 +3,7 @@ package mango
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
-	"mango/pb"
 	"math"
 	"os"
 
@@ -37,63 +35,57 @@ func NewReplayParser(filename string) (*ReplayParser, error) {
 	return r, nil
 }
 
-func (r *ReplayParser) Initialise() error {
+func (rp *ReplayParser) Initialise() error {
 	// Header handling
-	if data, _ := r.readString(headerLength); data != header {
+	if data, _ := rp.readString(headerLength); data != header {
 		return errors.New("failed to read header")
 	}
 	return nil
 }
 
-func (r *ReplayParser) GetSummary() (proto.Message, error) {
+func (rp *ReplayParser) GetSummary() (proto.Message, error) {
 	// Offset handling
-	if offset, err := r.readUint32(); err != nil {
+	if offset, err := rp.readUint32(); err != nil {
 		return nil, err
-	} else if _, err = r.file.Seek(int64(offset), 0); err != nil {
+	} else if _, err = rp.file.Seek(int64(offset), 0); err != nil {
 		return nil, err
-	} else if packet, err := r.GetPacket(); err != nil {
+	} else if packet, err := rp.GetPacket(); err != nil {
 		return nil, err
-	} else if summary, err := packet.Parse(); err != nil {
+	} else if err := packet.Parse(); err != nil {
 		return nil, err
 	} else {
-		return summary, nil
+		return packet.Message, nil
 	}
 }
 
-func (r *ReplayParser) ParseReplay() error {
-	r.readBytes(headerLength)
+func (rp *ReplayParser) ParseReplay() ([]*Packet, error) {
+	var packets []*Packet
+	rp.readBytes(headerLength)
 	for i := 0; i < 10; i++ {
-		p, err := r.GetPacket()
+		p, err := rp.GetPacket()
 		if err != nil {
 			if err != io.EOF {
-				return err
+				return nil, err
 			}
-			return nil
+			return packets, nil
 		}
-		res, err := p.Parse()
+		err = p.Parse()
 		if err != nil {
-			return err
+			return packets, err
 		}
-		if p.Size < 1000 {
-			fmt.Println(pb.EDemoCommands(p.Kind))
-			PrintStruct(res)
-
-		} else {
-			fmt.Println("- Too large to show :(")
-		}
-		fmt.Println()
+		packets = append(packets, p)
 	}
-	return nil
+	return packets, nil
 }
 
-func (r *ReplayParser) GetPacket() (*Packet, error) {
-	if kind, err := r.readVarint32(); err != nil {
+func (rp *ReplayParser) GetPacket() (*Packet, error) {
+	if kind, err := rp.readVarint32(); err != nil {
 		return nil, err
-	} else if tick, err := r.readVarint32(); err != nil {
+	} else if tick, err := rp.readVarint32(); err != nil {
 		return nil, err
-	} else if size, err := r.readVarint32(); err != nil {
+	} else if size, err := rp.readVarint32(); err != nil {
 		return nil, err
-	} else if message, err := r.readBytes(size); err != nil {
+	} else if message, err := rp.readBytes(size); err != nil {
 		return nil, err
 	} else {
 		isCompressed := (kind & compressedMask) > 0
@@ -102,11 +94,11 @@ func (r *ReplayParser) GetPacket() (*Packet, error) {
 			Tick:         tick,
 			Size:         size,
 			IsCompressed: isCompressed,
-			Message:      message,
+			RawMessage:   message,
 		}
 		if isCompressed {
 			packet.Kind &= ^compressedMask
-			packet.Message, err = snappy.Decode(nil, message)
+			packet.RawMessage, err = snappy.Decode(nil, message)
 			if err != nil {
 				return nil, err
 			}
@@ -115,10 +107,10 @@ func (r *ReplayParser) GetPacket() (*Packet, error) {
 	}
 }
 
-func (r *ReplayParser) readVarint32() (int, error) {
+func (rp *ReplayParser) readVarint32() (int, error) {
 	total, shift := 0, 0
 	for {
-		current, err := r.readByte()
+		current, err := rp.readByte()
 		if err != nil {
 			return total, err
 		}
@@ -135,23 +127,23 @@ func (r *ReplayParser) readVarint32() (int, error) {
 	}
 }
 
-func (r *ReplayParser) readUint32() (uint32, error) {
-	data, err := r.readBytes(4)
+func (rp *ReplayParser) readUint32() (uint32, error) {
+	data, err := rp.readBytes(4)
 	return binary.LittleEndian.Uint32(data), err
 }
 
-func (r *ReplayParser) readString(size int) (string, error) {
-	data, err := r.readBytes(size)
+func (rp *ReplayParser) readString(size int) (string, error) {
+	data, err := rp.readBytes(size)
 	return string(data), err
 }
 
-func (r *ReplayParser) readByte() (byte, error) {
-	data, err := r.readBytes(1)
+func (rp *ReplayParser) readByte() (byte, error) {
+	data, err := rp.readBytes(1)
 	return data[0], err
 }
 
-func (r *ReplayParser) readBytes(size int) (data []byte, err error) {
+func (rp *ReplayParser) readBytes(size int) (data []byte, err error) {
 	data = make([]byte, size)
-	_, err = r.file.Read(data)
+	_, err = rp.file.Read(data)
 	return
 }
