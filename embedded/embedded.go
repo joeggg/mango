@@ -4,7 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mango"
+	"mango/pb"
 	"reflect"
+
+	"google.golang.org/protobuf/proto"
 )
 
 var UBitVarMap = []int{0, 4, 8, 28}
@@ -34,15 +38,43 @@ func (p *EmbeddedParser) Parse() error {
 	if !ok {
 		return errors.New("unknown embedded message type")
 	}
-	fmt.Println(kind, t)
-	data := reflect.New(t).Elem().Interface()
-	fmt.Println(data)
-	size, err := p.readUBitVar()
+	data := reflect.New(t).Elem().Interface().(pb.CSVCMsg_ServerInfo)
+
+	size, err := p.readVarU(32)
 	if err != nil {
 		return err
 	}
-	fmt.Println(size, p.Length-p.TruePos)
+	if p.Length-p.TruePos < size*8 {
+		return errors.New("invalid embedded size given")
+	}
+
+	payload, err := p.readByteArray(size)
+	if err != nil {
+		return err
+	}
+	err = proto.Unmarshal(payload, &data)
+	if err != nil {
+		return err
+	}
+	mango.PrintStruct(data)
 	return nil
+}
+
+func (p *EmbeddedParser) readVarU(max int) (int, error) {
+	max = ((max + 6) / 7) * 7
+	result := 0
+	shift := 0
+	for {
+		num, err := p.readIntNBit(8)
+		if err != nil {
+			return result, err
+		}
+		result |= (num & 0x7F) << shift
+		shift += 7
+		if num&0x80 == 0 || shift == max {
+			return result, nil
+		}
+	}
 }
 
 func (p *EmbeddedParser) readUBitVar() (int, error) {
@@ -61,6 +93,18 @@ func (p *EmbeddedParser) readUBitVar() (int, error) {
 		return (num & 15) | extra<<4, nil
 	}
 
+}
+
+func (p *EmbeddedParser) readByteArray(size int) ([]byte, error) {
+	data := make([]byte, 0, size)
+	for i := 0; i < size; i++ {
+		num, err := p.readIntNBit(8)
+		if err != nil {
+			return data, err
+		}
+		data = append(data, byte(num))
+	}
+	return data, nil
 }
 
 func (p *EmbeddedParser) readIntNBit(n int) (int, error) {
