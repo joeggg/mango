@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"io"
 	"mango"
-	"mango/pb"
-	"reflect"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var UBitVarMap = []int{0, 4, 8, 28}
+
+type EmbeddedPacket struct {
+	Kind int
+	Data protoreflect.ProtoMessage
+}
 
 type EmbeddedParser struct {
 	Buffer  []byte
@@ -34,11 +38,11 @@ func (p *EmbeddedParser) Parse() error {
 	if err != nil {
 		return err
 	}
-	t, ok := EmbeddedTypeMap[kind]
-	if !ok {
-		return errors.New("unknown embedded message type")
+
+	data, err := GetEmbdeddedType(kind)
+	if err != nil {
+		return err
 	}
-	data := reflect.New(t).Elem().Interface().(pb.CSVCMsg_ServerInfo)
 
 	size, err := p.readVarU(32)
 	if err != nil {
@@ -52,7 +56,8 @@ func (p *EmbeddedParser) Parse() error {
 	if err != nil {
 		return err
 	}
-	err = proto.Unmarshal(payload, &data)
+
+	err = proto.Unmarshal(payload, data)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"mango/embedded"
 	"os"
-	"reflect"
 	"testing"
 )
 
@@ -17,12 +16,6 @@ func TestEmbeddedParser(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-}
-
-func TestEmbeddedTypeMap(t *testing.T) {
-	kind := embedded.EmbeddedTypeMap[0]
-	msg := reflect.New(kind).Elem().Interface()
-	fmt.Println(msg)
 }
 
 func loadPacketData(name string) []byte {
