@@ -1,8 +1,8 @@
 package packet
 
 import (
-	"errors"
 	"fmt"
+	"mango/embedded"
 	"mango/pb"
 
 	"google.golang.org/protobuf/proto"
@@ -10,8 +10,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
-type PacketHandler func(*Packet, proto.Message) error
+type PacketHandler func(proto.Message) (*embedded.EmbeddedPacket, error)
 
+// Packet type to handler function
 var PacketHandlerMap = map[pb.EDemoCommands]PacketHandler{
 	pb.EDemoCommands_DEM_Stop:                HandlePlaceHolder,
 	pb.EDemoCommands_DEM_FileHeader:          HandlePlaceHolder,
@@ -21,7 +22,7 @@ var PacketHandlerMap = map[pb.EDemoCommands]PacketHandler{
 	pb.EDemoCommands_DEM_ClassInfo:           HandlePlaceHolder,
 	pb.EDemoCommands_DEM_StringTables:        HandlePlaceHolder,
 	pb.EDemoCommands_DEM_Packet:              HandleEmbeddedPacket,
-	pb.EDemoCommands_DEM_SignonPacket:        HandlePlaceHolder,
+	pb.EDemoCommands_DEM_SignonPacket:        HandleEmbeddedPacket,
 	pb.EDemoCommands_DEM_ConsoleCmd:          HandlePlaceHolder,
 	pb.EDemoCommands_DEM_CustomData:          HandlePlaceHolder,
 	pb.EDemoCommands_DEM_CustomDataCallbacks: HandlePlaceHolder,
@@ -31,6 +32,7 @@ var PacketHandlerMap = map[pb.EDemoCommands]PacketHandler{
 	pb.EDemoCommands_DEM_SpawnGroups:         HandlePlaceHolder,
 }
 
+// Map of packet type to struct name for creating the correct proto instance
 var PacketTypeMap = map[pb.EDemoCommands]string{
 	pb.EDemoCommands_DEM_Error:               "",
 	pb.EDemoCommands_DEM_Stop:                "mango.CDemoStop",
@@ -55,7 +57,7 @@ var PacketTypeMap = map[pb.EDemoCommands]string{
 func GetPacketType(command pb.EDemoCommands) (proto.Message, error) {
 	t, ok := PacketTypeMap[command]
 	if !ok {
-		return nil, errors.New("unknown embedded message type")
+		return nil, fmt.Errorf("unknown packet type: %s", command)
 	}
 	if t == "" {
 		return nil, fmt.Errorf("received a %s packet", command)

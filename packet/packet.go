@@ -18,6 +18,9 @@ type Packet struct {
 	Embed        *embedded.EmbeddedPacket
 }
 
+/*
+	Parse the packet and process the result, dependent on the type
+*/
 func (p *Packet) Parse() error {
 	p.Command = pb.EDemoCommands(p.Kind)
 	result, err := GetPacketType(p.Command)
@@ -29,5 +32,11 @@ func (p *Packet) Parse() error {
 		return err
 	}
 	p.Message = result
+	// Handle message and set embedded if there is one
+	handler := PacketHandlerMap[p.Command]
+	p.Embed, err = handler(p.Message)
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 func TestEmbeddedParse(t *testing.T) {
 	packetMap := mango.LoadExamplePacketData("embedded_packets")
 	for name, info := range packetMap {
-		fmt.Printf("Testing packet type %s: \n", name)
+		fmt.Printf("Testing packet type %s: \n\n", name)
 		data, _ := base64.StdEncoding.DecodeString(info["data"].(string))
 		d := embedded.NewEmbeddedDecoder(data)
 		p, err := d.Decode()
@@ -23,5 +23,6 @@ func TestEmbeddedParse(t *testing.T) {
 			t.Error(err)
 		}
 		mango.PrintStruct(p.Data)
+		fmt.Println()
 	}
 }

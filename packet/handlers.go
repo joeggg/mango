@@ -7,21 +7,26 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func HandleEmbeddedPacket(p *Packet, data proto.Message) error {
-	payload := data.(*pb.CDemoPacket)
-	decoder := embedded.NewEmbeddedDecoder(payload.Data)
+/*
+	Process a packet with embedded data by parsing it
+*/
+func HandleEmbeddedPacket(message proto.Message) (*embedded.EmbeddedPacket, error) {
+	info := message.(*pb.CDemoPacket)
+	decoder := embedded.NewEmbeddedDecoder(info.Data)
 	packet, err := decoder.Decode()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = packet.Parse()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	p.Embed = packet
-	return nil
+	return packet, nil
 }
 
-func HandlePlaceHolder(p *Packet, data proto.Message) error {
-	return nil
+/*
+	Placeholder for unimplemented message types
+*/
+func HandlePlaceHolder(message proto.Message) (*embedded.EmbeddedPacket, error) {
+	return nil, nil
 }

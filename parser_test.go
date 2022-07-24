@@ -1,13 +1,12 @@
 package mango_test
 
 import (
-	"encoding/base64"
 	"fmt"
 	"mango"
 	"testing"
 )
 
-const testReplayFilename = "example_data/test.dem"
+const testReplayFilename = "testdata/test.dem"
 
 func TestSummary(t *testing.T) {
 	if p, err := mango.NewReplayParser(testReplayFilename); err != nil {
@@ -17,7 +16,7 @@ func TestSummary(t *testing.T) {
 	} else if summary, err := p.GetSummary(); err != nil {
 		t.Error(err)
 	} else {
-		fmt.Println("Summary packet:")
+		fmt.Printf("Summary packet:\n\n")
 		err = mango.PrintStruct(summary)
 		if err != nil {
 			t.Error(err)
@@ -34,12 +33,12 @@ func TestParse(t *testing.T) {
 		t.Error(err)
 	} else {
 		fmt.Println("All replay parsed through without errors!")
-		fmt.Println("Sample packets: ")
-		for i := 0; i < 5; i++ {
+		fmt.Printf("Sample packets: \n\n")
+		for i := 0; i < 1; i++ {
 			fmt.Println(packets[i].Command)
-			fmt.Println(base64.StdEncoding.EncodeToString(packets[i].RawMessage))
 			if packets[i].Size < 1000 {
 				err = mango.PrintStruct(packets[i].Message)
+				fmt.Println()
 				if err != nil {
 					t.Error(err)
 				}
@@ -52,9 +51,8 @@ func TestParse(t *testing.T) {
 				}
 
 			} else {
-				fmt.Println("Too big to show :(")
+				fmt.Printf("Too big to show :(\n\n")
 			}
-			fmt.Println()
 		}
 	}
 }

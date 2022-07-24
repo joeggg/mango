@@ -14,6 +14,9 @@ type EmbeddedDecoder struct {
 	TruePos int
 }
 
+/*
+	Initialise an embedded message decoder with raw byte data and return it
+*/
 func NewEmbeddedDecoder(data []byte) *EmbeddedDecoder {
 	buffer := make([]byte, 0, len(data))
 	for _, item := range data {
@@ -22,6 +25,9 @@ func NewEmbeddedDecoder(data []byte) *EmbeddedDecoder {
 	return &EmbeddedDecoder{Buffer: buffer, Length: 8 * len(buffer), BytePos: 0, TruePos: 0}
 }
 
+/*
+	Decode the packet header and extract the raw data
+*/
 func (p *EmbeddedDecoder) Decode() (*EmbeddedPacket, error) {
 	kind, err := p.readUBitVar()
 	if err != nil {

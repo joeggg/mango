@@ -8,6 +8,9 @@ type EmbeddedPacket struct {
 	Data    proto.Message
 }
 
+/*
+	Parse the packet into a proto struct
+*/
 func (p *EmbeddedPacket) Parse() error {
 	result, err := GetEmbdeddedType(p.Kind)
 	if err != nil {

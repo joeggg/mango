@@ -16,7 +16,7 @@ func PrintStruct(data any) error {
 }
 
 func LoadExamplePacketData(name string) map[string]map[string]interface{} {
-	file, err := os.ReadFile(fmt.Sprintf("../example_data/%s.json", name))
+	file, err := os.ReadFile(fmt.Sprintf("../testdata/%s.json", name))
 	if err != nil {
 		panic(err)
 	}
