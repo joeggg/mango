@@ -61,7 +61,7 @@ func (rp *ReplayParser) GetSummary() (proto.Message, error) {
 func (rp *ReplayParser) ParseReplay() ([]*Packet, error) {
 	var packets []*Packet
 	rp.readBytes(headerLength)
-	for i := 0; i < 10; i++ {
+	for {
 		p, err := rp.GetPacket()
 		if err != nil {
 			if err != io.EOF {
@@ -75,7 +75,6 @@ func (rp *ReplayParser) ParseReplay() ([]*Packet, error) {
 		}
 		packets = append(packets, p)
 	}
-	return packets, nil
 }
 
 func (rp *ReplayParser) GetPacket() (*Packet, error) {
