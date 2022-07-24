@@ -34,18 +34,18 @@ func TestParse(t *testing.T) {
 	} else {
 		fmt.Println("All replay parsed through without errors!")
 		fmt.Printf("Sample packets: \n\n")
-		for i := 0; i < 1; i++ {
-			fmt.Println(packets[i].Command)
-			if packets[i].Size < 1000 {
-				err = mango.PrintStruct(packets[i].Message)
+		for _, packet := range packets {
+			fmt.Println(packet.Command)
+			if packet.Size < 1000 {
+				err = mango.PrintStruct(packet.Message)
 				fmt.Println()
 				if err != nil {
 					t.Error(err)
 				}
-				if packets[i].Embed == nil {
+				if packet.Embed == nil {
 					continue
 				}
-				err = mango.PrintStruct(packets[i].Embed.Data)
+				err = mango.PrintStruct(packet.Embed.Data)
 				if err != nil {
 					t.Error(err)
 				}
