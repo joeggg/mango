@@ -58,7 +58,7 @@ func GetPacketType(command pb.EDemoCommands) (proto.Message, error) {
 		return nil, errors.New("unknown embedded message type")
 	}
 	if t == "" {
-		return nil, errors.New(fmt.Sprintf("received a %s packet", command))
+		return nil, fmt.Errorf("received a %s packet", command)
 	}
 	name := protoreflect.FullName(t)
 	cls, err := protoregistry.GlobalTypes.FindMessageByName(name)
