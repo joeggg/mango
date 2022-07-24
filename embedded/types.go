@@ -14,7 +14,10 @@ var EmbeddedTypeMap = map[int]string{
 	int(pb.NET_Messages_net_NOP):                  "mango.CNETMsg_NOP",
 	int(pb.NET_Messages_net_Tick):                 "mango.CNETMsg_Tick",
 	int(pb.NET_Messages_net_SetConVar):            "mango.CNETMsg_SetConVar",
+	int(pb.NET_Messages_net_SignonState):          "mango.CNETMsg_SignonState",
 	int(pb.SVC_Messages_svc_ServerInfo):           "mango.CSVCMsg_ServerInfo",
+	int(pb.SVC_Messages_svc_ClassInfo):            "mango.CSVCMsg_ClassInfo",
+	int(pb.SVC_Messages_svc_CreateStringTable):    "mango.CSVCMsg_CreateStringTable",
 	int(pb.SVC_Messages_svc_ClearAllStringTables): "mango.CSVCMsg_ClearAllStringTables",
 }
 
