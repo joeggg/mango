@@ -1,4 +1,4 @@
-package mango
+package packet
 
 import (
 	"errors"

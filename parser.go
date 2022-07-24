@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"mango/packet"
 	"math"
 	"os"
 
@@ -58,8 +59,8 @@ func (rp *ReplayParser) GetSummary() (proto.Message, error) {
 	}
 }
 
-func (rp *ReplayParser) ParseReplay() ([]*Packet, error) {
-	var packets []*Packet
+func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
+	var packets []*packet.Packet
 	rp.readBytes(headerLength)
 	for {
 		p, err := rp.GetPacket()
@@ -77,7 +78,7 @@ func (rp *ReplayParser) ParseReplay() ([]*Packet, error) {
 	}
 }
 
-func (rp *ReplayParser) GetPacket() (*Packet, error) {
+func (rp *ReplayParser) GetPacket() (*packet.Packet, error) {
 	if kind, err := rp.readVarint32(); err != nil {
 		return nil, err
 	} else if tick, err := rp.readVarint32(); err != nil {
@@ -88,7 +89,7 @@ func (rp *ReplayParser) GetPacket() (*Packet, error) {
 		return nil, err
 	} else {
 		isCompressed := (kind & compressedMask) > 0
-		packet := &Packet{
+		packet := &packet.Packet{
 			Kind:         kind,
 			Tick:         tick,
 			Size:         size,

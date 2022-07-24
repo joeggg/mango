@@ -1,6 +1,7 @@
 package mango_test
 
 import (
+	"encoding/base64"
 	"fmt"
 	"mango"
 	"testing"
@@ -32,8 +33,11 @@ func TestParse(t *testing.T) {
 	} else if packets, err := p.ParseReplay(); err != nil {
 		t.Error(err)
 	} else {
-		for i := 0; i < 10; i++ {
+		fmt.Println("All replay parsed through without errors!")
+		fmt.Println("Sample packets: ")
+		for i := 0; i < 5; i++ {
 			fmt.Println(packets[i].Command)
+			fmt.Println(base64.StdEncoding.EncodeToString(packets[i].RawMessage))
 			if packets[i].Size < 1000 {
 				err = mango.PrintStruct(packets[i].Message)
 				if err != nil {
