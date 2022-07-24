@@ -29,25 +29,17 @@ func NewEmbeddedDecoder(data []byte) *EmbeddedDecoder {
 	Decode the packet header and extract the raw data
 */
 func (p *EmbeddedDecoder) Decode() (*EmbeddedPacket, error) {
-	kind, err := p.readUBitVar()
-	if err != nil {
+	if kind, err := p.readUBitVar(); err != nil {
 		return nil, err
-	}
-
-	size, err := p.readVarU(32)
-	if err != nil {
+	} else if size, err := p.readVarU(32); err != nil {
 		return nil, err
-	}
-	if p.Length-p.TruePos < size*8 {
+	} else if p.Length-p.TruePos < size*8 {
 		return nil, errors.New("invalid embedded size given")
-	}
-
-	payload, err := p.readByteArray(size)
-	if err != nil {
+	} else if payload, err := p.readByteArray(size); err != nil {
 		return nil, err
+	} else {
+		return &EmbeddedPacket{Kind: kind, RawData: payload}, nil
 	}
-
-	return &EmbeddedPacket{Kind: kind, RawData: payload}, nil
 }
 
 func (p *EmbeddedDecoder) readVarU(max int) (int, error) {
