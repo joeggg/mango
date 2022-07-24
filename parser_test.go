@@ -35,17 +35,16 @@ func TestParse(t *testing.T) {
 		fmt.Println("All replay parsed through without errors!")
 		fmt.Printf("Sample packets: \n\n")
 		for _, packet := range packets {
-			fmt.Println(packet.Command)
+			fmt.Printf("%s:\n", packet.Command)
 			if packet.Size < 1000 {
-				err = mango.PrintStruct(packet.Message)
-				fmt.Println()
-				if err != nil {
-					t.Error(err)
+				if packet.Embed != nil {
+					fmt.Printf("Embedded packet! Type: %s\n", packet.Embed.Command)
+					err = mango.PrintStruct(packet.Embed.Data)
+
+				} else {
+
+					err = mango.PrintStruct(packet.Message)
 				}
-				if packet.Embed == nil {
-					continue
-				}
-				err = mango.PrintStruct(packet.Embed.Data)
 				if err != nil {
 					t.Error(err)
 				}
@@ -53,6 +52,7 @@ func TestParse(t *testing.T) {
 			} else {
 				fmt.Printf("Too big to show :(\n\n")
 			}
+			fmt.Println()
 		}
 	}
 }
