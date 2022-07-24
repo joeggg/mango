@@ -40,15 +40,12 @@ func TestParse(t *testing.T) {
 				if packet.Embed != nil {
 					fmt.Printf("Embedded packet! Type: %s\n", packet.Embed.Command)
 					err = mango.PrintStruct(packet.Embed.Data)
-
 				} else {
-
 					err = mango.PrintStruct(packet.Message)
 				}
 				if err != nil {
 					t.Error(err)
 				}
-
 			} else {
 				fmt.Printf("Too big to show :(\n\n")
 			}
