@@ -4,18 +4,24 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"mango"
 	"mango/embedded"
 	"os"
 	"testing"
 )
 
-func TestEmbeddedParser(t *testing.T) {
+func TestEmbeddedParse(t *testing.T) {
 	data := loadPacketData("sign_on_packet")
-	p := embedded.NewEmbeddedParser(data)
-	err := p.Parse()
+	d := embedded.NewEmbeddedDecoder(data)
+	p, err := d.Decode()
 	if err != nil {
 		t.Error(err)
 	}
+	err = p.Parse()
+	if err != nil {
+		t.Error(err)
+	}
+	mango.PrintStruct(p.Data)
 }
 
 func loadPacketData(name string) []byte {

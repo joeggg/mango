@@ -32,13 +32,21 @@ func TestParse(t *testing.T) {
 	} else if packets, err := p.ParseReplay(); err != nil {
 		t.Error(err)
 	} else {
-		for _, packet := range packets {
-			fmt.Println(packet.Command)
-			if packet.Size < 1000 {
-				err = mango.PrintStruct(packet.Message)
+		for i := 0; i < 10; i++ {
+			fmt.Println(packets[i].Command)
+			if packets[i].Size < 1000 {
+				err = mango.PrintStruct(packets[i].Message)
 				if err != nil {
 					t.Error(err)
 				}
+				if packets[i].Embed == nil {
+					continue
+				}
+				err = mango.PrintStruct(packets[i].Embed.Data)
+				if err != nil {
+					t.Error(err)
+				}
+
 			} else {
 				fmt.Println("Too big to show :(")
 			}

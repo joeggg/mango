@@ -2,70 +2,49 @@ package embedded
 
 import (
 	"errors"
-	"fmt"
 	"io"
-	"mango"
-
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var UBitVarMap = []int{0, 4, 8, 28}
 
-type EmbeddedPacket struct {
-	Kind int
-	Data protoreflect.ProtoMessage
-}
-
-type EmbeddedParser struct {
+type EmbeddedDecoder struct {
 	Buffer  []byte
 	Length  int
 	BytePos int
 	TruePos int
 }
 
-func NewEmbeddedParser(data []byte) *EmbeddedParser {
+func NewEmbeddedDecoder(data []byte) *EmbeddedDecoder {
 	buffer := make([]byte, 0, len(data))
 	for _, item := range data {
 		buffer = append(buffer, byte(item))
 	}
-	return &EmbeddedParser{Buffer: buffer, Length: 8 * len(buffer), BytePos: 0, TruePos: 0}
+	return &EmbeddedDecoder{Buffer: buffer, Length: 8 * len(buffer), BytePos: 0, TruePos: 0}
 }
 
-func (p *EmbeddedParser) Parse() error {
-	fmt.Println(p.Length)
+func (p *EmbeddedDecoder) Decode() (*EmbeddedPacket, error) {
 	kind, err := p.readUBitVar()
 	if err != nil {
-		return err
-	}
-
-	data, err := GetEmbdeddedType(kind)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	size, err := p.readVarU(32)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if p.Length-p.TruePos < size*8 {
-		return errors.New("invalid embedded size given")
+		return nil, errors.New("invalid embedded size given")
 	}
 
 	payload, err := p.readByteArray(size)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = proto.Unmarshal(payload, data)
-	if err != nil {
-		return err
-	}
-	mango.PrintStruct(data)
-	return nil
+	return &EmbeddedPacket{Kind: kind, RawData: payload}, nil
 }
 
-func (p *EmbeddedParser) readVarU(max int) (int, error) {
+func (p *EmbeddedDecoder) readVarU(max int) (int, error) {
 	max = ((max + 6) / 7) * 7
 	result := 0
 	shift := 0
@@ -82,7 +61,7 @@ func (p *EmbeddedParser) readVarU(max int) (int, error) {
 	}
 }
 
-func (p *EmbeddedParser) readUBitVar() (int, error) {
+func (p *EmbeddedDecoder) readUBitVar() (int, error) {
 	num, err := p.readIntNBit(6)
 	if err != nil {
 		return num, err
@@ -100,7 +79,7 @@ func (p *EmbeddedParser) readUBitVar() (int, error) {
 
 }
 
-func (p *EmbeddedParser) readByteArray(size int) ([]byte, error) {
+func (p *EmbeddedDecoder) readByteArray(size int) ([]byte, error) {
 	data := make([]byte, 0, size)
 	for i := 0; i < size; i++ {
 		num, err := p.readIntNBit(8)
@@ -112,7 +91,7 @@ func (p *EmbeddedParser) readByteArray(size int) ([]byte, error) {
 	return data, nil
 }
 
-func (p *EmbeddedParser) readIntNBit(n int) (int, error) {
+func (p *EmbeddedDecoder) readIntNBit(n int) (int, error) {
 	total := 0
 	for i := 0; i < n; i++ {
 		val, err := p.readBit()
@@ -124,7 +103,7 @@ func (p *EmbeddedParser) readIntNBit(n int) (int, error) {
 	return total, nil
 }
 
-func (p *EmbeddedParser) readBit() (b byte, err error) {
+func (p *EmbeddedDecoder) readBit() (b byte, err error) {
 	if p.TruePos >= p.Length {
 		return b, io.EOF
 	}
