@@ -34,25 +34,25 @@ func TestParse(t *testing.T) {
 		fmt.Println("All replay parsed through without errors!")
 		fmt.Printf("Sample packets: \n\n")
 		count := 0
-		for _, packet := range packets {
+		for i := 0; i < 10; i++ {
 			var toShow proto.Message
 			show := false
-			if packet.Embed != nil {
-				toShow = packet.Embed.Data
-				if packet.Embed.Kind != 4 && packet.Embed.Kind != 145 {
+			if packets[i].Embed != nil {
+				toShow = packets[i].Embed.Data
+				if packets[i].Embed.Kind != 4 && packets[i].Embed.Kind != 145 {
 					show = true
 					count++
-					fmt.Printf("%s:\n", packet.Command)
-					fmt.Printf("Embedded packet! Type: %s\n", packet.Embed.Command)
+					fmt.Printf("%s:\n", packets[i].Command)
+					fmt.Printf("Embedded packet! Type: %s\n", packets[i].Embed.Command)
 				}
 			} else {
-				fmt.Printf("%s:\n", packet.Command)
-				toShow = packet.Message
+				fmt.Printf("%s:\n", packets[i].Command)
+				toShow = packets[i].Message
 				show = true
 				count++
 			}
 
-			if packet.Size < 10000 {
+			if packets[i].Size < 10000 {
 				if show {
 					mango.PrintStruct(toShow)
 					fmt.Println()
