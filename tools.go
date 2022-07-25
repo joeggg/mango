@@ -6,13 +6,12 @@ import (
 	"os"
 )
 
-func PrintStruct(data any) error {
+func PrintStruct(data any) {
 	out, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
-		return err
+		panic(err)
 	}
 	fmt.Println(string(out))
-	return nil
 }
 
 func LoadExamplePacketData(name string) map[string]map[string]interface{} {
