@@ -12,11 +12,28 @@ import (
 var StringTables = map[string][]*pb.CDemoStringTablesItemsT{}
 
 /*
-	Process a packet with embedded data by parsing it
+	Process a packet with embedded data
 */
 func HandleEmbedded(message proto.Message) (*embedded.EmbeddedPacket, error) {
 	info := message.(*pb.CDemoPacket)
 	decoder := embedded.NewEmbeddedDecoder(info.Data)
+	packet, err := decoder.Decode()
+	if err != nil {
+		return nil, err
+	}
+	err = packet.Parse()
+	if err != nil {
+		return nil, err
+	}
+	return packet, nil
+}
+
+/*
+	Process a packet with embedded data
+*/
+func HandleFullEmbedded(message proto.Message) (*embedded.EmbeddedPacket, error) {
+	info := message.(*pb.CDemoFullPacket)
+	decoder := embedded.NewEmbeddedDecoder(info.Packet.Data)
 	packet, err := decoder.Decode()
 	if err != nil {
 		return nil, err
