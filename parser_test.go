@@ -74,6 +74,6 @@ func TestParseWithGatherers(t *testing.T) {
 	} else if _, err := rp.ParseReplay(); err != nil {
 		t.Error(err)
 	} else {
-		fmt.Println(cg.GetResults())
+		mango.PrintStruct(cg.GetResults())
 	}
 }
