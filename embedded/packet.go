@@ -1,6 +1,8 @@
 package embedded
 
-import "google.golang.org/protobuf/proto"
+import (
+	"google.golang.org/protobuf/proto"
+)
 
 type EmbeddedPacket struct {
 	Kind    int
@@ -23,5 +25,17 @@ func (p *EmbeddedPacket) Parse() error {
 	}
 	p.Command = name
 	p.Data = result
+	// Check for registered handlers
+	handlers, ok := EmbdeddedHandlers[p.Kind]
+	if !ok {
+		return nil
+	}
+	// Run each handler
+	for _, handler := range handlers {
+		err = handler(p.Data)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

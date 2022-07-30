@@ -9,8 +9,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
+type EmbeddedHandler func(proto.Message) error
+
+var EmbdeddedHandlers = map[int][]EmbeddedHandler{}
+
 // Embedded type to proto struct name
-var EmbeddedTypeMap = map[int]string{
+var EmbeddedTypes = map[int]string{
 	int(pb.NET_Messages_net_NOP):                        "mango.CNETMsg_NOP",
 	int(pb.NET_Messages_net_Disconnect):                 "mango.CNETMsg_Disconnect",
 	int(pb.NET_Messages_net_Tick):                       "mango.CNETMsg_Tick",
@@ -150,7 +154,7 @@ var EmbeddedTypeMap = map[int]string{
 }
 
 func GetEmbdeddedType(kind int) (string, proto.Message, error) {
-	t, ok := EmbeddedTypeMap[kind]
+	t, ok := EmbeddedTypes[kind]
 	if !ok {
 		return t, nil, fmt.Errorf("unknown embedded message type: %d", kind)
 	}
@@ -161,4 +165,13 @@ func GetEmbdeddedType(kind int) (string, proto.Message, error) {
 	}
 	data := cls.New().Interface()
 	return t, data, nil
+}
+
+func RegisterHandler(kind int, handler EmbeddedHandler) {
+	_, ok := EmbdeddedHandlers[kind]
+	if !ok {
+		EmbdeddedHandlers[kind] = []EmbeddedHandler{handler}
+	} else {
+		EmbdeddedHandlers[kind] = append(EmbdeddedHandlers[kind], handler)
+	}
 }

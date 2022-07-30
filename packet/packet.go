@@ -33,7 +33,7 @@ func (p *Packet) Parse() error {
 	}
 	p.Message = result
 	// Handle message and set embedded if there is one
-	handler := PacketHandlerMap[p.Command]
+	handler := PacketHandlers[p.Command]
 	p.Embed, err = handler(p.Message)
 	if err != nil {
 		return err
