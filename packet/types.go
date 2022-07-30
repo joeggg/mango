@@ -2,7 +2,6 @@ package packet
 
 import (
 	"fmt"
-	"mango/embedded"
 	"mango/pb"
 
 	"google.golang.org/protobuf/proto"
@@ -10,19 +9,19 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
-type PacketHandler func(proto.Message) (*embedded.EmbeddedPacket, error)
+type PacketHandler func(*Packet) error
 
 // Packet type to handler function
-var PacketHandlerMap = map[pb.EDemoCommands]PacketHandler{
+var PacketHandlers = map[pb.EDemoCommands]PacketHandler{
 	pb.EDemoCommands_DEM_Stop:                HandlePlaceHolder,
 	pb.EDemoCommands_DEM_FileHeader:          HandlePlaceHolder,
 	pb.EDemoCommands_DEM_FileInfo:            HandlePlaceHolder,
 	pb.EDemoCommands_DEM_SyncTick:            HandlePlaceHolder,
-	pb.EDemoCommands_DEM_SendTables:          HandlePlaceHolder,
-	pb.EDemoCommands_DEM_ClassInfo:           HandlePlaceHolder,
-	pb.EDemoCommands_DEM_StringTables:        HandlePlaceHolder,
-	pb.EDemoCommands_DEM_Packet:              HandleEmbeddedPacket,
-	pb.EDemoCommands_DEM_SignonPacket:        HandleEmbeddedPacket,
+	pb.EDemoCommands_DEM_SendTables:          HandleSendTables,
+	pb.EDemoCommands_DEM_ClassInfo:           HandleClassinfo,
+	pb.EDemoCommands_DEM_StringTables:        HandleStringTables,
+	pb.EDemoCommands_DEM_Packet:              HandleEmbedded,
+	pb.EDemoCommands_DEM_SignonPacket:        HandleEmbedded,
 	pb.EDemoCommands_DEM_ConsoleCmd:          HandlePlaceHolder,
 	pb.EDemoCommands_DEM_CustomData:          HandlePlaceHolder,
 	pb.EDemoCommands_DEM_CustomDataCallbacks: HandlePlaceHolder,
@@ -33,7 +32,7 @@ var PacketHandlerMap = map[pb.EDemoCommands]PacketHandler{
 }
 
 // Map of packet type to struct name for creating the correct proto instance
-var PacketTypeMap = map[pb.EDemoCommands]string{
+var PacketTypes = map[pb.EDemoCommands]string{
 	pb.EDemoCommands_DEM_Error:               "",
 	pb.EDemoCommands_DEM_Stop:                "mango.CDemoStop",
 	pb.EDemoCommands_DEM_FileHeader:          "mango.CDemoFileHeader",
@@ -55,7 +54,7 @@ var PacketTypeMap = map[pb.EDemoCommands]string{
 }
 
 func GetPacketType(command pb.EDemoCommands) (proto.Message, error) {
-	t, ok := PacketTypeMap[command]
+	t, ok := PacketTypes[command]
 	if !ok {
 		return nil, fmt.Errorf("unknown packet type: %s", command)
 	}

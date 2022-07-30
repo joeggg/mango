@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"mango/embedded"
 	"mango/packet"
 	"math"
 	"os"
@@ -22,7 +23,9 @@ var (
 )
 
 type ReplayParser struct {
-	file *os.File
+	file      *os.File
+	decoder   *embedded.EmbeddedDecoder
+	Gatherers []embedded.Gatherer
 }
 
 func NewReplayParser(filename string) (*ReplayParser, error) {
@@ -31,9 +34,15 @@ func NewReplayParser(filename string) (*ReplayParser, error) {
 		return nil, err
 	}
 	r := &ReplayParser{
-		file: file,
+		file:      file,
+		decoder:   &embedded.EmbeddedDecoder{},
+		Gatherers: []embedded.Gatherer{},
 	}
 	return r, nil
+}
+
+func (rp *ReplayParser) RegisterGatherer(g embedded.Gatherer) {
+	rp.Gatherers = append(rp.Gatherers, g)
 }
 
 func (rp *ReplayParser) Initialise() error {
@@ -59,10 +68,14 @@ func (rp *ReplayParser) GetSummary() (proto.Message, error) {
 	}
 }
 
+/*
+	Parse through the entire replay
+*/
 func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 	var packets []*packet.Packet
-	rp.readBytes(headerLength)
+	rp.readBytes(headerLength) // Read past summary offset
 	for {
+		// Get next packet and parse
 		p, err := rp.GetPacket()
 		if err != nil {
 			if err != io.EOF {
@@ -73,6 +86,15 @@ func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 		err = p.Parse()
 		if err != nil {
 			return packets, err
+		}
+		// Handle embedded message
+		if p.RawEmbed != nil {
+			embed, err := rp.decoder.Decode(p.RawEmbed)
+			if err != nil {
+				return packets, err
+			}
+			embed.Parse(rp.Gatherers)
+			p.Embed = embed
 		}
 		packets = append(packets, p)
 	}

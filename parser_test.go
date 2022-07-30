@@ -3,6 +3,7 @@ package mango_test
 import (
 	"fmt"
 	"mango"
+	"mango/pb"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -34,26 +35,27 @@ func TestParse(t *testing.T) {
 		fmt.Println("All replay parsed through without errors!")
 		fmt.Printf("Sample packets: \n\n")
 		count := 0
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 700; i++ {
 			var toShow proto.Message
-			show := false
 			if packets[i].Embed != nil {
-				toShow = packets[i].Embed.Data
-				if packets[i].Embed.Kind != 4 && packets[i].Embed.Kind != 145 {
-					show = true
-					count++
+				kind := packets[i].Embed.Kind
+				if kind != int(pb.NET_Messages_net_Tick) &&
+					kind != int(pb.EBaseUserMessages_UM_ParticleManager) &&
+					kind != int(pb.EDotaUserMessages_DOTA_UM_SpectatorPlayerUnitOrders) &&
+					kind != int(pb.EDotaUserMessages_DOTA_UM_TE_UnitAnimationEnd) {
 					fmt.Printf("%s:\n", packets[i].Command)
 					fmt.Printf("Embedded packet! Type: %s\n", packets[i].Embed.Command)
+					toShow = packets[i].Embed.Data
+					count++
 				}
 			} else {
 				fmt.Printf("%s:\n", packets[i].Command)
 				toShow = packets[i].Message
-				show = true
 				count++
 			}
 
 			if packets[i].Size < 10000 {
-				if show {
+				if toShow != nil {
 					mango.PrintStruct(toShow)
 					fmt.Println()
 				}
@@ -61,6 +63,6 @@ func TestParse(t *testing.T) {
 				fmt.Printf("Too big to show :(\n\n")
 			}
 		}
-		fmt.Printf("Showing %d packets", count)
+		fmt.Printf("Showing %d packets\n", count)
 	}
 }

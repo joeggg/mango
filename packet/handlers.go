@@ -1,32 +1,79 @@
 package packet
 
 import (
-	"mango/embedded"
+	"encoding/json"
 	"mango/pb"
-
-	"google.golang.org/protobuf/proto"
+	"os"
 )
 
+var StringTables = map[string][]*pb.CDemoStringTablesItemsT{}
+
 /*
-	Process a packet with embedded data by parsing it
+	Process a packet with embedded data
 */
-func HandleEmbeddedPacket(message proto.Message) (*embedded.EmbeddedPacket, error) {
-	info := message.(*pb.CDemoPacket)
-	decoder := embedded.NewEmbeddedDecoder(info.Data)
-	packet, err := decoder.Decode()
+func HandleEmbedded(p *Packet) error {
+	info := p.Message.(*pb.CDemoPacket)
+	p.RawEmbed = info.Data
+	return nil
+}
+
+/*
+	Process a packet with embedded data
+*/
+func HandleFullEmbedded(p *Packet) error {
+	info := p.Message.(*pb.CDemoPacket)
+	p.RawEmbed = info.Data
+	return nil
+}
+
+/*
+	Process a string tables packet by saving the tables and putting them into memory
+*/
+func HandleStringTables(p *Packet) error {
+	info := p.Message.(*pb.CDemoStringTables)
+	data, err := json.MarshalIndent(info, "", "  ")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	err = packet.Parse()
+	err = os.WriteFile("string_tables.json", data, 0755)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return packet, nil
+	for _, table := range info.Tables {
+		StringTables[*table.TableName] = table.Items
+	}
+	return nil
+}
+
+func HandleClassinfo(p *Packet) error {
+	info := p.Message.(*pb.CDemoClassInfo)
+	data, err := json.MarshalIndent(info, "", "  ")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile("class_info.json", data, 0755)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func HandleSendTables(p *Packet) error {
+	info := p.Message.(*pb.CDemoSendTables)
+	data, err := json.MarshalIndent(info, "", "  ")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile("send_tables.json", data, 0755)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 /*
 	Placeholder for unimplemented message types
 */
-func HandlePlaceHolder(message proto.Message) (*embedded.EmbeddedPacket, error) {
-	return nil, nil
+func HandlePlaceHolder(p *Packet) error {
+	return nil
 }
