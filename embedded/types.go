@@ -11,8 +11,6 @@ import (
 
 type EmbeddedHandler func(proto.Message) error
 
-var EmbdeddedHandlers = map[int][]EmbeddedHandler{}
-
 // Embedded type to proto struct name
 var EmbeddedTypes = map[int]string{
 	int(pb.NET_Messages_net_NOP):                        "mango.CNETMsg_NOP",
@@ -165,13 +163,4 @@ func GetEmbdeddedType(kind int) (string, proto.Message, error) {
 	}
 	data := cls.New().Interface()
 	return t, data, nil
-}
-
-func RegisterHandler(kind int, handler EmbeddedHandler) {
-	_, ok := EmbdeddedHandlers[kind]
-	if !ok {
-		EmbdeddedHandlers[kind] = []EmbeddedHandler{handler}
-	} else {
-		EmbdeddedHandlers[kind] = append(EmbdeddedHandlers[kind], handler)
-	}
 }

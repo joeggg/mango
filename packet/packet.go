@@ -13,6 +13,7 @@ type Packet struct {
 	Size         int
 	IsCompressed bool
 	RawMessage   []byte
+	RawEmbed     []byte
 	Command      pb.EDemoCommands
 	Message      proto.Message
 	Embed        *embedded.EmbeddedPacket
@@ -34,7 +35,7 @@ func (p *Packet) Parse() error {
 	p.Message = result
 	// Handle message and set embedded if there is one
 	handler := PacketHandlers[p.Command]
-	p.Embed, err = handler(p.Message)
+	err = handler(p)
 	if err != nil {
 		return err
 	}

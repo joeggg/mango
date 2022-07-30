@@ -15,20 +15,10 @@ type EmbeddedDecoder struct {
 }
 
 /*
-	Initialise an embedded message decoder with raw byte data and return it
-*/
-func NewEmbeddedDecoder(data []byte) *EmbeddedDecoder {
-	buffer := make([]byte, 0, len(data))
-	for _, item := range data {
-		buffer = append(buffer, byte(item))
-	}
-	return &EmbeddedDecoder{Buffer: buffer, Length: 8 * len(buffer), BytePos: 0, TruePos: 0}
-}
-
-/*
 	Decode the packet header and extract the raw data
 */
-func (p *EmbeddedDecoder) Decode() (*EmbeddedPacket, error) {
+func (p *EmbeddedDecoder) Decode(data []byte) (*EmbeddedPacket, error) {
+	p.initialiseData(data)
 	if kind, err := p.readUBitVar(); err != nil {
 		return nil, err
 	} else if size, err := p.readVarU(32); err != nil {
@@ -40,6 +30,15 @@ func (p *EmbeddedDecoder) Decode() (*EmbeddedPacket, error) {
 	} else {
 		return &EmbeddedPacket{Kind: kind, RawData: payload}, nil
 	}
+}
+
+/*
+	Initialise an embedded message decoder with raw byte data
+*/
+func (p *EmbeddedDecoder) initialiseData(data []byte) {
+	p.Buffer = data
+	p.Length = 8 * len(data)
+	p.BytePos, p.TruePos = 0, 0
 }
 
 func (p *EmbeddedDecoder) readVarU(max int) (int, error) {

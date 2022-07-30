@@ -2,11 +2,8 @@ package packet
 
 import (
 	"encoding/json"
-	"mango/embedded"
 	"mango/pb"
 	"os"
-
-	"google.golang.org/protobuf/proto"
 )
 
 var StringTables = map[string][]*pb.CDemoStringTablesItemsT{}
@@ -14,85 +11,69 @@ var StringTables = map[string][]*pb.CDemoStringTablesItemsT{}
 /*
 	Process a packet with embedded data
 */
-func HandleEmbedded(message proto.Message) (*embedded.EmbeddedPacket, error) {
-	info := message.(*pb.CDemoPacket)
-	decoder := embedded.NewEmbeddedDecoder(info.Data)
-	packet, err := decoder.Decode()
-	if err != nil {
-		return nil, err
-	}
-	err = packet.Parse()
-	if err != nil {
-		return nil, err
-	}
-	return packet, nil
+func HandleEmbedded(p *Packet) error {
+	info := p.Message.(*pb.CDemoPacket)
+	p.RawEmbed = info.Data
+	return nil
 }
 
 /*
 	Process a packet with embedded data
 */
-func HandleFullEmbedded(message proto.Message) (*embedded.EmbeddedPacket, error) {
-	info := message.(*pb.CDemoFullPacket)
-	decoder := embedded.NewEmbeddedDecoder(info.Packet.Data)
-	packet, err := decoder.Decode()
-	if err != nil {
-		return nil, err
-	}
-	err = packet.Parse()
-	if err != nil {
-		return nil, err
-	}
-	return packet, nil
+func HandleFullEmbedded(p *Packet) error {
+	info := p.Message.(*pb.CDemoPacket)
+	p.RawEmbed = info.Data
+	return nil
 }
 
 /*
 	Process a string tables packet by saving the tables and putting them into memory
 */
-func HandleStringTables(message proto.Message) (*embedded.EmbeddedPacket, error) {
-	info := message.(*pb.CDemoStringTables)
+func HandleStringTables(p *Packet) error {
+	info := p.Message.(*pb.CDemoStringTables)
 	data, err := json.MarshalIndent(info, "", "  ")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = os.WriteFile("string_tables.json", data, 0755)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, table := range info.Tables {
 		StringTables[*table.TableName] = table.Items
 	}
-	return nil, nil
+	return nil
 }
 
-func HandleClassinfo(message proto.Message) (*embedded.EmbeddedPacket, error) {
-	info := message.(*pb.CDemoClassInfo)
+func HandleClassinfo(p *Packet) error {
+	info := p.Message.(*pb.CDemoClassInfo)
 	data, err := json.MarshalIndent(info, "", "  ")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = os.WriteFile("class_info.json", data, 0755)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return nil, nil
+	return nil
 }
 
-func HandleSendTables(message proto.Message) (*embedded.EmbeddedPacket, error) {
-	info := message.(*pb.CDemoSendTables)
+func HandleSendTables(p *Packet) error {
+	info := p.Message.(*pb.CDemoSendTables)
 	data, err := json.MarshalIndent(info, "", "  ")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = os.WriteFile("send_tables.json", data, 0755)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return nil, nil
+	return nil
 }
 
 /*
 	Placeholder for unimplemented message types
 */
-func HandlePlaceHolder(message proto.Message) (*embedded.EmbeddedPacket, error) {
-	return nil, nil
+func HandlePlaceHolder(p *Packet) error {
+	return nil
 }

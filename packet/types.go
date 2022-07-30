@@ -2,7 +2,6 @@ package packet
 
 import (
 	"fmt"
-	"mango/embedded"
 	"mango/pb"
 
 	"google.golang.org/protobuf/proto"
@@ -10,7 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
-type PacketHandler func(proto.Message) (*embedded.EmbeddedPacket, error)
+type PacketHandler func(*Packet) error
 
 // Packet type to handler function
 var PacketHandlers = map[pb.EDemoCommands]PacketHandler{
