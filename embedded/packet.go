@@ -6,6 +6,7 @@ import (
 
 type EmbeddedPacket struct {
 	Kind    int
+	Size    int
 	Command string
 	RawData []byte
 	Data    proto.Message
