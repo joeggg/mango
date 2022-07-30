@@ -13,7 +13,7 @@ import (
 type PacketHandler func(proto.Message) (*embedded.EmbeddedPacket, error)
 
 // Packet type to handler function
-var PacketHandlerMap = map[pb.EDemoCommands]PacketHandler{
+var PacketHandlers = map[pb.EDemoCommands]PacketHandler{
 	pb.EDemoCommands_DEM_Stop:                HandlePlaceHolder,
 	pb.EDemoCommands_DEM_FileHeader:          HandlePlaceHolder,
 	pb.EDemoCommands_DEM_FileInfo:            HandlePlaceHolder,
@@ -33,7 +33,7 @@ var PacketHandlerMap = map[pb.EDemoCommands]PacketHandler{
 }
 
 // Map of packet type to struct name for creating the correct proto instance
-var PacketTypeMap = map[pb.EDemoCommands]string{
+var PacketTypes = map[pb.EDemoCommands]string{
 	pb.EDemoCommands_DEM_Error:               "",
 	pb.EDemoCommands_DEM_Stop:                "mango.CDemoStop",
 	pb.EDemoCommands_DEM_FileHeader:          "mango.CDemoFileHeader",
@@ -55,7 +55,7 @@ var PacketTypeMap = map[pb.EDemoCommands]string{
 }
 
 func GetPacketType(command pb.EDemoCommands) (proto.Message, error) {
-	t, ok := PacketTypeMap[command]
+	t, ok := PacketTypes[command]
 	if !ok {
 		return nil, fmt.Errorf("unknown packet type: %s", command)
 	}

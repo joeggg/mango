@@ -63,6 +63,6 @@ func TestParse(t *testing.T) {
 				fmt.Printf("Too big to show :(\n\n")
 			}
 		}
-		fmt.Printf("Showing %d packets", count)
+		fmt.Printf("Showing %d packets\n", count)
 	}
 }
