@@ -3,7 +3,9 @@ A Dota 2 replay parser in Go
 
 Inspired by Smoke and Clarity by Skadistats
 
-A work in progress - can parse the entire replay, returning the unmarshalled protocol buffer packets. "Gatherers" can be attached to the parser to collect data from different kinds of packets. You can write your own or use the default ones provided. I currently don't have many implemented however. 
+A work in progress - can parse the entire replay, returning the unmarshalled protocol buffer packets. "Gatherers" can be attached to the parser to collect data from different kinds of packets. You can write your own or use the default ones provided. I currently don't have many implemented however.
+
+Sendtables are currently not fully decoded so a lot of info will be not be readable just yet.
 
 To be able to write these, check out the file `embedded/types.go` to see the different packet type names, which you can find the full definitions for in the files `pb/*.go`.
 
@@ -22,7 +24,7 @@ if err != nil {
 }
 results := rp.GetResults() // Results indexed by gatherer name
 
-...
+... <do something with the results>
 ```
 To add a gatherer
 ```go
