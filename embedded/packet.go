@@ -1,6 +1,9 @@
 package embedded
 
 import (
+	"context"
+
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -30,16 +33,16 @@ func (p *EmbeddedPacket) Parse(gatherers []Gatherer) error {
 	if gatherers == nil {
 		return nil
 	}
+	errs, _ := errgroup.WithContext(context.Background())
 	for _, g := range gatherers {
-		handlers := g.GetHandlers()
-		handler, ok := handlers[p.Kind]
+		handler, ok := g.GetHandlers()[p.Kind]
 		if !ok {
 			return nil
 		}
-		err = handler(p.Data)
-		if err != nil {
-			return err
-		}
+		// Run handlers concurrently
+		errs.Go(func() error {
+			return handler(p.Data)
+		})
 	}
-	return nil
+	return errs.Wait()
 }
