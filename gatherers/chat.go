@@ -1,17 +1,22 @@
 package gatherers
 
 import (
-	"fmt"
 	"mango/embedded"
 	"mango/pb"
 
 	"google.golang.org/protobuf/proto"
 )
 
+type Message struct {
+	Text string
+	Time float64
+}
+
 type ChatGatherer struct {
 	handlers     map[int]embedded.EmbeddedHandler
 	total        int
-	GameMessages map[int][]string
+	seconds      float64
+	GameMessages map[int][]*Message
 }
 
 func NewChatGatherer() *ChatGatherer {
@@ -20,11 +25,12 @@ func NewChatGatherer() *ChatGatherer {
 		int(pb.EDotaUserMessages_DOTA_UM_ChatMessage): cg.handleChatMessage,
 		int(pb.EDotaUserMessages_DOTA_UM_ChatEvent):   cg.handleChatEvent,
 		int(pb.EDotaUserMessages_DOTA_UM_ChatWheel):   cg.handleChatWheel,
+		int(pb.NET_Messages_net_Tick):                 cg.handleTick,
 	}
 	cg.total = 0
-	cg.GameMessages = map[int][]string{}
+	cg.GameMessages = map[int][]*Message{}
 	for i := -1; i < 10; i++ {
-		cg.GameMessages[i] = []string{}
+		cg.GameMessages[i] = []*Message{}
 	}
 	return cg
 }
@@ -37,14 +43,17 @@ func (cg *ChatGatherer) GetResults() interface{} {
 	return cg.GameMessages
 }
 
+func (cg *ChatGatherer) handleTick(data proto.Message) error {
+	message := data.(*pb.CNETMsg_Tick)
+	cg.seconds = float64(message.GetTick()) * 1.0 / 30.0
+	return nil
+}
+
 func (cg *ChatGatherer) handleChatMessage(data proto.Message) error {
 	message := data.(*pb.CDOTAUserMsg_ChatMessage)
 	id := int(message.GetSourcePlayerId())
-	cg.GameMessages[id] = append(cg.GameMessages[id], message.GetMessageText())
-	fmt.Printf(
-		"ChatMessage:\n\tplayer=%d, message=%s\n\n",
-		message.GetSourcePlayerId(),
-		message.GetMessageText(),
+	cg.GameMessages[id] = append(
+		cg.GameMessages[id], &Message{message.GetMessageText(), cg.seconds},
 	)
 	cg.total++
 	return nil
@@ -70,16 +79,15 @@ func (cg *ChatGatherer) handleChatEvent(data proto.Message) error {
 	// Add message to store
 	if len(playerIds) > 0 {
 		for _, id := range playerIds {
-			cg.GameMessages[int(id)] = append(cg.GameMessages[int(id)], message.GetType().String())
+			cg.GameMessages[int(id)] = append(
+				cg.GameMessages[int(id)], &Message{message.GetType().String(), cg.seconds / 60},
+			)
 		}
 	} else {
-		cg.GameMessages[-1] = append(cg.GameMessages[-1], message.GetType().String())
+		cg.GameMessages[-1] = append(
+			cg.GameMessages[-1], &Message{message.GetType().String(), cg.seconds / 60},
+		)
 	}
-	fmt.Printf(
-		"ChatEvent:\n\tplayers=%v, type=%s\n\n",
-		playerIds,
-		message.GetType(),
-	)
 	cg.total++
 	return nil
 }
@@ -88,13 +96,7 @@ func (cg *ChatGatherer) handleChatWheel(data proto.Message) error {
 	message := data.(*pb.CDOTAUserMsg_ChatWheel)
 	chatWheel := pb.EDOTAChatWheelMessage(message.GetChatMessageId()).String()
 	id := int(message.GetPlayerId())
-	cg.GameMessages[id] = append(cg.GameMessages[id], chatWheel)
-	fmt.Printf(
-		"ChatWheel:\n\tplayer=%d, message=%s, emoticon=%d\n\n",
-		message.GetPlayerId(),
-		chatWheel,
-		message.GetEmoticonId(),
-	)
+	cg.GameMessages[id] = append(cg.GameMessages[id], &Message{chatWheel, cg.seconds / 60})
 	cg.total++
 	return nil
 }
