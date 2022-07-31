@@ -3,6 +3,7 @@ package packet
 import (
 	"encoding/json"
 	"mango/pb"
+	"mango/sendtables"
 	"os"
 )
 
@@ -71,7 +72,12 @@ func HandleClassinfo(p *Packet) error {
 
 func HandleSendTables(p *Packet) error {
 	info := p.Message.(*pb.CDemoSendTables)
-	data, err := json.MarshalIndent(info, "", "  ")
+	decoder := sendtables.TableDecoder{}
+	flat, err := decoder.Decode(info.Data)
+	if err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(flat, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -79,7 +85,7 @@ func HandleSendTables(p *Packet) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return err
 }
 
 /*
