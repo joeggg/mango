@@ -25,7 +25,7 @@ func TestEmbeddedParse(t *testing.T) {
 	}
 }
 
-func TestGatherers(t *testing.T) {
+func TestGatherersSuccess(t *testing.T) {
 	packetMap := mango.LoadExamplePacketData("embedded_packets")
 	info := packetMap["ServerInfo"]
 	total := 3
@@ -47,9 +47,30 @@ func TestGatherers(t *testing.T) {
 		fmt.Printf("Handler %s ran %d times\n", i, g.GetResults())
 		count += g.GetResults().(int)
 	}
-	// Check all ran each time
+	// Check all ran each time and the data accumulated
 	if count != total*total {
 		t.Error("Not all handlers ran!")
+	}
+}
+
+func TestGatherersFirstNull(t *testing.T) {
+	packetMap := mango.LoadExamplePacketData("embedded_packets")
+	info := packetMap["ServerInfo"]
+	gatherers := map[string]embedded.Gatherer{
+		"0": &TestGatherer{map[int]embedded.EmbeddedHandler{}, 0}, "1": NewTestGatherer(),
+	}
+	_, err := processEmbeddedFromJson(info, gatherers)
+	if err != nil {
+		t.Error(err)
+	}
+	count := 0
+	for i, g := range gatherers {
+		fmt.Printf("Handler %s ran %d times\n", i, g.GetResults())
+		count += g.GetResults().(int)
+	}
+	// Only second one should run
+	if count != 1 {
+		t.Errorf("invalid number of handlers ran: %d", count)
 	}
 }
 
