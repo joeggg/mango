@@ -20,7 +20,7 @@ type ChatGatherer struct {
 	GameMessages map[int][]*Message
 }
 
-func NewChatGatherer() *ChatGatherer {
+func NewChatGatherer() embedded.Gatherer {
 	cg := &ChatGatherer{}
 	cg.handlers = map[int]embedded.EmbeddedHandler{
 		int(pb.EDotaUserMessages_DOTA_UM_ChatMessage):           cg.handleChatMessage,

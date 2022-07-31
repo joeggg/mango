@@ -6,3 +6,5 @@ type Gatherer interface {
 	GetHandlers() map[int]EmbeddedHandler
 	GetResults() interface{}
 }
+
+type GathererFactory func() Gatherer
