@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mango"
 	"mango/gatherers"
-	"mango/packet"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -13,11 +12,13 @@ import (
 const testReplayFilename = "testdata/test.dem"
 
 func TestSummary(t *testing.T) {
-	if p, err := mango.NewReplayParser(testReplayFilename); err != nil {
+	p := mango.NewReplayParser(testReplayFilename)
+	err := p.Initialise()
+	if err != nil {
 		t.Error(err)
-	} else if err = p.Initialise(); err != nil {
-		t.Error(err)
-	} else if summary, err := p.GetSummary(); err != nil {
+	}
+	defer p.Close()
+	if summary, err := p.GetSummary(); err != nil {
 		t.Error(err)
 	} else {
 		fmt.Printf("Summary packet:\n\n")
@@ -26,58 +27,64 @@ func TestSummary(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	if p, err := mango.NewReplayParser(testReplayFilename); err != nil {
-		t.Error(err)
-	} else if err = p.Initialise(); err != nil {
-		t.Error(err)
-	} else if packets, err := p.ParseReplay(); err != nil {
-		t.Error(err)
-	} else {
-		fmt.Println("All replay parsed through without errors!")
-		fmt.Printf("Sample packets: \n\n")
-		count := 0
-		for i := 0; i < 10; i++ {
-			var toShow proto.Message
-			if packets[i].Embed != nil {
-				fmt.Printf("%s:\n", packets[i].Command)
-				fmt.Printf("Embedded packet! Type: %s\n", packets[i].Embed.Command)
-				toShow = packets[i].Embed.Data
-				count++
-			} else {
-				fmt.Printf("%s:\n", packets[i].Command)
-				toShow = packets[i].Message
-				count++
-			}
-
-			if toShow != nil {
-				if packets[i].Size < 10000 {
-					mango.PrintStruct(toShow)
-					fmt.Println()
-				} else {
-					fmt.Printf("Too big to show :(\n\n")
-				}
-			}
-		}
-		fmt.Printf("Showing %d packets\n", count)
-	}
-}
-
-func TestParseWithGatherers(t *testing.T) {
-	rp, err := mango.NewReplayParser(testReplayFilename)
+	p := mango.NewReplayParser(testReplayFilename)
+	err := p.Initialise()
 	if err != nil {
 		t.Error(err)
 	}
-	cg := gatherers.NewChatGatherer()
-	rp.RegisterGatherer(cg)
+	defer p.Close()
 
-	if err = rp.Initialise(); err != nil {
+	packets, err := p.ParseReplay()
+	if err != nil {
 		t.Error(err)
-	} else if _, err := rp.ParseReplay(); err != nil {
+	}
+	fmt.Println("All replay parsed through without errors!")
+	fmt.Printf("Sample packets: \n\n")
+	count := 0
+	for i := 0; i < 10; i++ {
+		var toShow proto.Message
+		if packets[i].Embed != nil {
+			fmt.Printf("%s:\n", packets[i].Command)
+			fmt.Printf("Embedded packet! Type: %s\n", packets[i].Embed.Command)
+			toShow = packets[i].Embed.Data
+			count++
+		} else {
+			fmt.Printf("%s:\n", packets[i].Command)
+			toShow = packets[i].Message
+			count++
+		}
+
+		if toShow != nil {
+			mango.PrintStruct(toShow)
+			fmt.Println()
+		}
+	}
+	fmt.Printf("Showing %d packets\n", count)
+}
+
+func TestParseWithGatherers(t *testing.T) {
+	rp := mango.NewReplayParser(testReplayFilename)
+	cg := gatherers.NewChatGatherer()
+	mg := gatherers.NewMetadataGatherer()
+	rp.RegisterGatherer(cg)
+	rp.RegisterGatherer(mg)
+
+	err := rp.Initialise()
+	if err != nil {
+		t.Error(err)
+	}
+	defer rp.Close()
+
+	if _, err := rp.ParseReplay(); err != nil {
 		t.Error(err)
 	} else {
-		for player, messages := range cg.GetResults().(map[int][]*gatherers.Message) {
-			fmt.Printf("%s:\n", packet.Players[player])
-			mango.PrintStruct(messages)
+		fmt.Printf("\nGatherer results: \n\n")
+		results := rp.GetResults()
+		for name := range results {
+			if results == nil {
+				t.Errorf("%s gatherer results were null", name)
+			}
 		}
+		mango.PrintStruct(results)
 	}
 }

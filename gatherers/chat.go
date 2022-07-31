@@ -38,6 +38,8 @@ func NewChatGatherer() *ChatGatherer {
 	return cg
 }
 
+func (cg *ChatGatherer) GetName() string { return "Chat" }
+
 func (cg *ChatGatherer) GetHandlers() map[int]embedded.EmbeddedHandler {
 	return cg.handlers
 }
