@@ -1,7 +1,6 @@
 package gatherers
 
 import (
-	"fmt"
 	"mango/embedded"
 	"mango/pb"
 
@@ -55,7 +54,6 @@ func (cg *ChatGatherer) handleTick(data proto.Message) error {
 
 func (cg *ChatGatherer) handleGameRules(data proto.Message) error {
 	message := data.(*pb.CDOTAUserMsg_GamerulesStateChanged)
-	fmt.Println(cg.seconds, message)
 	if message.GetState() == 10 {
 		cg.timeOffset = cg.seconds + 90
 		cg.seconds = -90
