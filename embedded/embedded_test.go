@@ -6,6 +6,7 @@ import (
 	"mango"
 	"mango/embedded"
 	"mango/pb"
+	"strconv"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -24,14 +25,14 @@ func TestEmbeddedParse(t *testing.T) {
 	}
 }
 
-func TestGatherers(t *testing.T) {
+func TestGatherersSuccess(t *testing.T) {
 	packetMap := mango.LoadExamplePacketData("embedded_packets")
 	info := packetMap["ServerInfo"]
 	total := 3
 	// Register multiple gatherers
-	var gatherers []embedded.Gatherer
+	gatherers := map[string]embedded.Gatherer{}
 	for i := 0; i < total; i++ {
-		gatherers = append(gatherers, NewTestGatherer())
+		gatherers[strconv.Itoa(i)] = NewTestGatherer()
 	}
 	// Parse several times to simulate data gatherering over time
 	for i := 0; i < total; i++ {
@@ -43,17 +44,38 @@ func TestGatherers(t *testing.T) {
 
 	count := 0
 	for i, g := range gatherers {
-		fmt.Printf("Handler %d ran %d times\n", i, g.GetResults())
+		fmt.Printf("Handler %s ran %d times\n", i, g.GetResults())
 		count += g.GetResults().(int)
 	}
-	// Check all ran each time
+	// Check all ran each time and the data accumulated
 	if count != total*total {
 		t.Error("Not all handlers ran!")
 	}
 }
 
+func TestGatherersFirstNull(t *testing.T) {
+	packetMap := mango.LoadExamplePacketData("embedded_packets")
+	info := packetMap["ServerInfo"]
+	gatherers := map[string]embedded.Gatherer{
+		"0": &TestGatherer{map[int]embedded.EmbeddedHandler{}, 0}, "1": NewTestGatherer(),
+	}
+	_, err := processEmbeddedFromJson(info, gatherers)
+	if err != nil {
+		t.Error(err)
+	}
+	count := 0
+	for i, g := range gatherers {
+		fmt.Printf("Handler %s ran %d times\n", i, g.GetResults())
+		count += g.GetResults().(int)
+	}
+	// Only second one should run
+	if count != 1 {
+		t.Errorf("invalid number of handlers ran: %d", count)
+	}
+}
+
 func processEmbeddedFromJson(
-	info map[string]interface{}, gatherers []embedded.Gatherer,
+	info map[string]interface{}, gatherers map[string]embedded.Gatherer,
 ) (*embedded.EmbeddedPacket, error) {
 	data, _ := base64.StdEncoding.DecodeString(info["data"].(string))
 	d := embedded.EmbeddedDecoder{}
@@ -82,6 +104,8 @@ func NewTestGatherer() *TestGatherer {
 	t.result = 0
 	return t
 }
+
+func (t *TestGatherer) GetName() string { return "Test" }
 
 func (t *TestGatherer) GetHandlers() map[int]embedded.EmbeddedHandler {
 	return t.handlers

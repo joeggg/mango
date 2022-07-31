@@ -28,7 +28,7 @@ func (p *EmbeddedDecoder) Decode(data []byte) (*EmbeddedPacket, error) {
 	} else if payload, err := p.readByteArray(size); err != nil {
 		return nil, err
 	} else {
-		return &EmbeddedPacket{Kind: kind, RawData: payload}, nil
+		return &EmbeddedPacket{Kind: kind, Size: size, RawData: payload}, nil
 	}
 }
 

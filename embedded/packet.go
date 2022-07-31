@@ -1,11 +1,15 @@
 package embedded
 
 import (
+	"context"
+
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
 )
 
 type EmbeddedPacket struct {
 	Kind    int
+	Size    int
 	Command string
 	RawData []byte
 	Data    proto.Message
@@ -14,7 +18,7 @@ type EmbeddedPacket struct {
 /*
 	Parse the packet into a proto struct
 */
-func (p *EmbeddedPacket) Parse(gatherers []Gatherer) error {
+func (p *EmbeddedPacket) Parse(gatherers map[string]Gatherer) error {
 	name, result, err := GetEmbdeddedType(p.Kind)
 	if err != nil {
 		return err
@@ -29,16 +33,16 @@ func (p *EmbeddedPacket) Parse(gatherers []Gatherer) error {
 	if gatherers == nil {
 		return nil
 	}
+	errs, _ := errgroup.WithContext(context.Background())
 	for _, g := range gatherers {
-		handlers := g.GetHandlers()
-		handler, ok := handlers[p.Kind]
+		handler, ok := g.GetHandlers()[p.Kind]
 		if !ok {
-			return nil
+			continue
 		}
-		err = handler(p.Data)
-		if err != nil {
-			return err
-		}
+		// Run handlers concurrently
+		errs.Go(func() error {
+			return handler(p.Data)
+		})
 	}
-	return nil
+	return errs.Wait()
 }

@@ -23,29 +23,31 @@ var (
 )
 
 type ReplayParser struct {
+	filename  string
 	file      *os.File
 	decoder   *embedded.EmbeddedDecoder
-	Gatherers []embedded.Gatherer
+	Gatherers map[string]embedded.Gatherer
 }
 
-func NewReplayParser(filename string) (*ReplayParser, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	r := &ReplayParser{
-		file:      file,
+func NewReplayParser(filename string) *ReplayParser {
+	return &ReplayParser{
+		filename:  filename,
 		decoder:   &embedded.EmbeddedDecoder{},
-		Gatherers: []embedded.Gatherer{},
+		Gatherers: map[string]embedded.Gatherer{},
 	}
-	return r, nil
 }
 
 func (rp *ReplayParser) RegisterGatherer(g embedded.Gatherer) {
-	rp.Gatherers = append(rp.Gatherers, g)
+	rp.Gatherers[g.GetName()] = g
 }
 
 func (rp *ReplayParser) Initialise() error {
+	// Read file
+	file, err := os.Open(rp.filename)
+	if err != nil {
+		return err
+	}
+	rp.file = file
 	// Header handling
 	if data, _ := rp.readString(headerLength); data != header {
 		return errors.New("failed to read header")
@@ -53,13 +55,20 @@ func (rp *ReplayParser) Initialise() error {
 	return nil
 }
 
+func (rp *ReplayParser) Close() error {
+	return rp.file.Close()
+}
+
+/*
+
+ */
 func (rp *ReplayParser) GetSummary() (proto.Message, error) {
 	// Offset handling
 	if offset, err := rp.readUint32(); err != nil {
 		return nil, err
 	} else if _, err = rp.file.Seek(int64(offset), 0); err != nil {
 		return nil, err
-	} else if packet, err := rp.GetPacket(); err != nil {
+	} else if packet, err := rp.getPacket(); err != nil {
 		return nil, err
 	} else if err := packet.Parse(); err != nil {
 		return nil, err
@@ -76,7 +85,7 @@ func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 	rp.readBytes(headerLength) // Read past summary offset
 	for {
 		// Get next packet and parse
-		p, err := rp.GetPacket()
+		p, err := rp.getPacket()
 		if err != nil {
 			if err != io.EOF {
 				return nil, err
@@ -100,7 +109,18 @@ func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 	}
 }
 
-func (rp *ReplayParser) GetPacket() (*packet.Packet, error) {
+/*
+	Return the results of all gatherers in one object, indexed by their names
+*/
+func (rp *ReplayParser) GetResults() map[string]interface{} {
+	results := map[string]interface{}{}
+	for name, g := range rp.Gatherers {
+		results[name] = g.GetResults()
+	}
+	return results
+}
+
+func (rp *ReplayParser) getPacket() (*packet.Packet, error) {
 	if kind, err := rp.readVarint32(); err != nil {
 		return nil, err
 	} else if tick, err := rp.readVarint32(); err != nil {
