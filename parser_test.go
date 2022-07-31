@@ -11,8 +11,8 @@ import (
 const testReplayFilename = "testdata/test.dem"
 
 func TestSummary(t *testing.T) {
-	p := mango.NewReplayParser(testReplayFilename)
-	err := p.Initialise()
+	p := mango.NewReplayParser()
+	err := p.Initialise(testReplayFilename)
 	if err != nil {
 		t.Error(err)
 	}
@@ -26,8 +26,8 @@ func TestSummary(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	p := mango.NewReplayParser(testReplayFilename)
-	err := p.Initialise()
+	p := mango.NewReplayParser()
+	err := p.Initialise(testReplayFilename)
 	if err != nil {
 		t.Error(err)
 	}
@@ -62,8 +62,8 @@ func TestParse(t *testing.T) {
 }
 
 func TestParseWithGatherers(t *testing.T) {
-	rp := mango.WithDefaultGatherers(mango.NewReplayParser(testReplayFilename))
-	err := rp.Initialise()
+	rp := mango.WithDefaultGatherers(mango.NewReplayParser())
+	err := rp.Initialise(testReplayFilename)
 	if err != nil {
 		t.Error(err)
 	}
