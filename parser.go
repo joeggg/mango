@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"mango/embedded"
+	"mango/gatherers"
 	"mango/packet"
 	"math"
 	"os"
@@ -35,6 +36,13 @@ func NewReplayParser(filename string) *ReplayParser {
 		decoder:   &embedded.EmbeddedDecoder{},
 		Gatherers: map[string]embedded.Gatherer{},
 	}
+}
+
+func WithDefaultGatherers(rp *ReplayParser) *ReplayParser {
+	for _, gFactory := range gatherers.Default {
+		rp.RegisterGatherer(gFactory())
+	}
+	return rp
 }
 
 func (rp *ReplayParser) RegisterGatherer(g embedded.Gatherer) {

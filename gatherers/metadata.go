@@ -12,7 +12,7 @@ type MetadataGatherer struct {
 	data     *pb.CDOTAMatchMetadataFile
 }
 
-func NewMetadataGatherer() *MetadataGatherer {
+func NewMetadataGatherer() embedded.Gatherer {
 	mg := &MetadataGatherer{}
 	mg.handlers = map[int]embedded.EmbeddedHandler{
 		int(pb.EDotaUserMessages_DOTA_UM_MatchMetadata): mg.handleData,

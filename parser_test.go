@@ -3,7 +3,6 @@ package mango_test
 import (
 	"fmt"
 	"mango"
-	"mango/gatherers"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -63,12 +62,7 @@ func TestParse(t *testing.T) {
 }
 
 func TestParseWithGatherers(t *testing.T) {
-	rp := mango.NewReplayParser(testReplayFilename)
-	cg := gatherers.NewChatGatherer()
-	mg := gatherers.NewMetadataGatherer()
-	rp.RegisterGatherer(cg)
-	rp.RegisterGatherer(mg)
-
+	rp := mango.WithDefaultGatherers(mango.NewReplayParser(testReplayFilename))
 	err := rp.Initialise()
 	if err != nil {
 		t.Error(err)
