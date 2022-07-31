@@ -1,6 +1,7 @@
 package gatherers
 
 import (
+	"fmt"
 	"mango/embedded"
 	"mango/pb"
 
@@ -15,6 +16,7 @@ type Message struct {
 type ChatGatherer struct {
 	handlers     map[int]embedded.EmbeddedHandler
 	total        int
+	timeOffset   float64
 	seconds      float64
 	GameMessages map[int][]*Message
 }
@@ -22,12 +24,14 @@ type ChatGatherer struct {
 func NewChatGatherer() *ChatGatherer {
 	cg := &ChatGatherer{}
 	cg.handlers = map[int]embedded.EmbeddedHandler{
-		int(pb.EDotaUserMessages_DOTA_UM_ChatMessage): cg.handleChatMessage,
-		int(pb.EDotaUserMessages_DOTA_UM_ChatEvent):   cg.handleChatEvent,
-		int(pb.EDotaUserMessages_DOTA_UM_ChatWheel):   cg.handleChatWheel,
-		int(pb.NET_Messages_net_Tick):                 cg.handleTick,
+		int(pb.EDotaUserMessages_DOTA_UM_ChatMessage):           cg.handleChatMessage,
+		int(pb.EDotaUserMessages_DOTA_UM_ChatEvent):             cg.handleChatEvent,
+		int(pb.EDotaUserMessages_DOTA_UM_ChatWheel):             cg.handleChatWheel,
+		int(pb.NET_Messages_net_Tick):                           cg.handleTick,
+		int(pb.EDotaUserMessages_DOTA_UM_GamerulesStateChanged): cg.handleGameRules,
 	}
 	cg.total = 0
+	cg.timeOffset = 0
 	cg.GameMessages = map[int][]*Message{}
 	for i := -1; i < 10; i++ {
 		cg.GameMessages[i] = []*Message{}
@@ -45,7 +49,17 @@ func (cg *ChatGatherer) GetResults() interface{} {
 
 func (cg *ChatGatherer) handleTick(data proto.Message) error {
 	message := data.(*pb.CNETMsg_Tick)
-	cg.seconds = float64(message.GetTick()) * 1.0 / 30.0
+	cg.seconds = float64(message.GetTick())*1.0/30.0 - cg.timeOffset
+	return nil
+}
+
+func (cg *ChatGatherer) handleGameRules(data proto.Message) error {
+	message := data.(*pb.CDOTAUserMsg_GamerulesStateChanged)
+	fmt.Println(cg.seconds, message)
+	if message.GetState() == 10 {
+		cg.timeOffset = cg.seconds + 90
+		cg.seconds = -90
+	}
 	return nil
 }
 
@@ -53,7 +67,7 @@ func (cg *ChatGatherer) handleChatMessage(data proto.Message) error {
 	message := data.(*pb.CDOTAUserMsg_ChatMessage)
 	id := int(message.GetSourcePlayerId())
 	cg.GameMessages[id] = append(
-		cg.GameMessages[id], &Message{message.GetMessageText(), cg.seconds},
+		cg.GameMessages[id], &Message{message.GetMessageText(), cg.seconds / 60},
 	)
 	cg.total++
 	return nil

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mango"
 	"mango/gatherers"
+	"mango/packet"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -74,6 +75,9 @@ func TestParseWithGatherers(t *testing.T) {
 	} else if _, err := rp.ParseReplay(); err != nil {
 		t.Error(err)
 	} else {
-		mango.PrintStruct(cg.GetResults())
+		for player, messages := range cg.GetResults().(map[int][]*gatherers.Message) {
+			fmt.Printf("%s:\n", packet.Players[player])
+			mango.PrintStruct(messages)
+		}
 	}
 }

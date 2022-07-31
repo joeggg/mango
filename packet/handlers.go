@@ -7,6 +7,7 @@ import (
 )
 
 var StringTables = map[string][]*pb.CDemoStringTablesItemsT{}
+var Players = map[int]string{}
 
 /*
 	Process a packet with embedded data
@@ -23,6 +24,16 @@ func HandleEmbedded(p *Packet) error {
 func HandleFullEmbedded(p *Packet) error {
 	info := p.Message.(*pb.CDemoPacket)
 	p.RawEmbed = info.Data
+	return nil
+}
+
+func HandleFileInfo(p *Packet) error {
+	info := p.Message.(*pb.CDemoFileInfo)
+	players := info.GameInfo.Dota.PlayerInfo
+	for i, player := range players {
+		Players[i] = player.GetHeroName()
+	}
+	Players[-1] = "no one"
 	return nil
 }
 

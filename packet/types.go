@@ -15,7 +15,7 @@ type PacketHandler func(*Packet) error
 var PacketHandlers = map[pb.EDemoCommands]PacketHandler{
 	pb.EDemoCommands_DEM_Stop:                HandlePlaceHolder,
 	pb.EDemoCommands_DEM_FileHeader:          HandlePlaceHolder,
-	pb.EDemoCommands_DEM_FileInfo:            HandlePlaceHolder,
+	pb.EDemoCommands_DEM_FileInfo:            HandleFileInfo,
 	pb.EDemoCommands_DEM_SyncTick:            HandlePlaceHolder,
 	pb.EDemoCommands_DEM_SendTables:          HandleSendTables,
 	pb.EDemoCommands_DEM_ClassInfo:           HandleClassinfo,
