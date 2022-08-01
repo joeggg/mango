@@ -3,12 +3,12 @@ package embedded_test
 import (
 	"encoding/base64"
 	"fmt"
-	"mango"
-	"mango/embedded"
-	"mango/pb"
 	"strconv"
 	"testing"
 
+	"github.com/joeggg/mango"
+	"github.com/joeggg/mango/embedded"
+	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 )
 

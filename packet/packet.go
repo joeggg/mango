@@ -1,9 +1,8 @@
 package packet
 
 import (
-	"mango/embedded"
-	"mango/pb"
-
+	"github.com/joeggg/mango/embedded"
+	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 )
 

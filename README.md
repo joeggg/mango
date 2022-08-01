@@ -11,8 +11,8 @@ To be able to write these, check out the file `embedded/types.go` to see the dif
 
 ### Example Usage
 ```go
-rp := mango.WithDefaultGatherers(mango.NewReplayParser(replayFilename))
-err := rp.Initialise()
+rp := mango.WithDefaultGatherers(mango.NewReplayParser())
+err := rp.Initialise(replayFilename)
 if err != nil {
     panic(err)
 }

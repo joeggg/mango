@@ -4,13 +4,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"mango/embedded"
-	"mango/gatherers"
-	"mango/packet"
 	"math"
 	"os"
 
 	"github.com/golang/snappy"
+	"github.com/joeggg/mango/embedded"
+	"github.com/joeggg/mango/gatherers"
+	"github.com/joeggg/mango/packet"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -24,15 +24,13 @@ var (
 )
 
 type ReplayParser struct {
-	filename  string
 	file      *os.File
 	decoder   *embedded.EmbeddedDecoder
 	Gatherers map[string]embedded.Gatherer
 }
 
-func NewReplayParser(filename string) *ReplayParser {
+func NewReplayParser() *ReplayParser {
 	return &ReplayParser{
-		filename:  filename,
 		decoder:   &embedded.EmbeddedDecoder{},
 		Gatherers: map[string]embedded.Gatherer{},
 	}
@@ -49,9 +47,9 @@ func (rp *ReplayParser) RegisterGatherer(g embedded.Gatherer) {
 	rp.Gatherers[g.GetName()] = g
 }
 
-func (rp *ReplayParser) Initialise() error {
+func (rp *ReplayParser) Initialise(filename string) error {
 	// Read file
-	file, err := os.Open(rp.filename)
+	file, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
