@@ -1,4 +1,4 @@
-module mango
+module github.com/joeggg/mango
 
 go 1.18
 

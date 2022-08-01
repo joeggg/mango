@@ -2,9 +2,10 @@ package packet
 
 import (
 	"encoding/json"
-	"mango/pb"
-	"mango/sendtables"
 	"os"
+
+	"github.com/joeggg/mango/pb"
+	"github.com/joeggg/mango/sendtables"
 )
 
 var StringTables = map[string][]*pb.CDemoStringTablesItemsT{}

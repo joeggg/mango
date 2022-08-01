@@ -2,8 +2,8 @@ package embedded
 
 import (
 	"fmt"
-	"mango/pb"
 
+	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"

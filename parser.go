@@ -4,13 +4,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"mango/embedded"
-	"mango/gatherers"
-	"mango/packet"
 	"math"
 	"os"
 
 	"github.com/golang/snappy"
+	"github.com/joeggg/mango/embedded"
+	"github.com/joeggg/mango/gatherers"
+	"github.com/joeggg/mango/packet"
 	"google.golang.org/protobuf/proto"
 )
 

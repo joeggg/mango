@@ -1,6 +1,6 @@
 package gatherers
 
-import "mango/embedded"
+import "github.com/joeggg/mango/embedded"
 
 var Default = []embedded.GathererFactory{
 	NewChatGatherer,

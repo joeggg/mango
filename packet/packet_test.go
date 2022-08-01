@@ -3,9 +3,10 @@ package packet_test
 import (
 	"encoding/base64"
 	"fmt"
-	"mango"
-	"mango/packet"
 	"testing"
+
+	"github.com/joeggg/mango"
+	"github.com/joeggg/mango/packet"
 )
 
 func TestPacketParse(t *testing.T) {

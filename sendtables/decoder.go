@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"mango/pb"
 	"math"
 
+	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 )
 

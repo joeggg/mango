@@ -2,9 +2,9 @@ package mango_test
 
 import (
 	"fmt"
-	"mango"
 	"testing"
 
+	"github.com/joeggg/mango"
 	"google.golang.org/protobuf/proto"
 )
 
