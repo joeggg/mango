@@ -3,9 +3,9 @@ syntax = "proto2";
 package mango;
 option go_package = "./;pb";
 
-import "base_gcmessages.proto";
-import "dota_gcmessages_common.proto";
-import "dota_gcmessages_common_match_management.proto";
+import "base_gcmessages_m.proto";
+import "dota_gcmessages_common_m.proto";
+import "dota_gcmessages_common_match_management_m.proto";
 
 option cc_generic_services = false;
 
