@@ -3,13 +3,14 @@ package embedded
 import (
 	"fmt"
 
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
-type EmbeddedHandler func(proto.Message) error
+type EmbeddedHandler func(proto.Message, *mappings.LookupObjects) error
 
 // Embedded type to proto struct name
 var EmbeddedTypes = map[int]string{

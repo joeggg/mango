@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/joeggg/mango"
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/packet"
 )
 
@@ -18,7 +19,7 @@ func TestPacketParse(t *testing.T) {
 			t.Error(err)
 		}
 		p := packet.Packet{RawMessage: b, Kind: int(info["code"].(float64))}
-		err = p.Parse()
+		err = p.Parse(&mappings.LookupObjects{})
 		if err != nil {
 			t.Error(err)
 		}

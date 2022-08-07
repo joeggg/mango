@@ -3,32 +3,33 @@ package packet
 import (
 	"fmt"
 
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
-type PacketHandler func(*Packet) error
+type PacketHandler func(*Packet, *mappings.LookupObjects) error
 
 // Packet type to handler function
 var PacketHandlers = map[pb.EDemoCommands]PacketHandler{
-	pb.EDemoCommands_DEM_Stop:                HandlePlaceHolder,
-	pb.EDemoCommands_DEM_FileHeader:          HandlePlaceHolder,
-	pb.EDemoCommands_DEM_FileInfo:            HandleFileInfo,
-	pb.EDemoCommands_DEM_SyncTick:            HandlePlaceHolder,
-	pb.EDemoCommands_DEM_SendTables:          HandleSendTables,
-	pb.EDemoCommands_DEM_ClassInfo:           HandleClassinfo,
-	pb.EDemoCommands_DEM_StringTables:        HandleStringTables,
-	pb.EDemoCommands_DEM_Packet:              HandleEmbedded,
-	pb.EDemoCommands_DEM_SignonPacket:        HandleEmbedded,
-	pb.EDemoCommands_DEM_ConsoleCmd:          HandlePlaceHolder,
-	pb.EDemoCommands_DEM_CustomData:          HandlePlaceHolder,
-	pb.EDemoCommands_DEM_CustomDataCallbacks: HandlePlaceHolder,
-	pb.EDemoCommands_DEM_UserCmd:             HandlePlaceHolder,
-	pb.EDemoCommands_DEM_FullPacket:          HandlePlaceHolder,
-	pb.EDemoCommands_DEM_SaveGame:            HandlePlaceHolder,
-	pb.EDemoCommands_DEM_SpawnGroups:         HandlePlaceHolder,
+	pb.EDemoCommands_DEM_Stop:                handlePlaceHolder,
+	pb.EDemoCommands_DEM_FileHeader:          handlePlaceHolder,
+	pb.EDemoCommands_DEM_FileInfo:            handleFileInfo,
+	pb.EDemoCommands_DEM_SyncTick:            handlePlaceHolder,
+	pb.EDemoCommands_DEM_SendTables:          handleSendTables,
+	pb.EDemoCommands_DEM_ClassInfo:           handleClassinfo,
+	pb.EDemoCommands_DEM_StringTables:        handleStringTables,
+	pb.EDemoCommands_DEM_Packet:              handleEmbedded,
+	pb.EDemoCommands_DEM_SignonPacket:        handleEmbedded,
+	pb.EDemoCommands_DEM_ConsoleCmd:          handlePlaceHolder,
+	pb.EDemoCommands_DEM_CustomData:          handlePlaceHolder,
+	pb.EDemoCommands_DEM_CustomDataCallbacks: handlePlaceHolder,
+	pb.EDemoCommands_DEM_UserCmd:             handlePlaceHolder,
+	pb.EDemoCommands_DEM_FullPacket:          handlePlaceHolder,
+	pb.EDemoCommands_DEM_SaveGame:            handlePlaceHolder,
+	pb.EDemoCommands_DEM_SpawnGroups:         handlePlaceHolder,
 }
 
 // Map of packet type to struct name for creating the correct proto instance

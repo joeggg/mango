@@ -2,6 +2,7 @@ package packet
 
 import (
 	"github.com/joeggg/mango/embedded"
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 )
@@ -21,7 +22,7 @@ type Packet struct {
 /*
 	Parse the packet and process the result, dependent on the type
 */
-func (p *Packet) Parse() error {
+func (p *Packet) Parse(lk *mappings.LookupObjects) error {
 	p.Command = pb.EDemoCommands(p.Kind)
 	result, err := GetPacketType(p.Command)
 	if err != nil {
@@ -34,7 +35,7 @@ func (p *Packet) Parse() error {
 	p.Message = result
 	// Handle message and set embedded if there is one
 	handler := PacketHandlers[p.Command]
-	err = handler(p)
+	err = handler(p, lk)
 	if err != nil {
 		return err
 	}

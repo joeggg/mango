@@ -8,6 +8,7 @@ import (
 
 	"github.com/joeggg/mango"
 	"github.com/joeggg/mango/embedded"
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 )
@@ -83,7 +84,7 @@ func processEmbeddedFromJson(
 	if err != nil {
 		return nil, err
 	}
-	err = p.Parse(gatherers)
+	err = p.Parse(gatherers, &mappings.LookupObjects{})
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +116,7 @@ func (t *TestGatherer) GetResults() interface{} {
 	return t.result
 }
 
-func (t *TestGatherer) testHandler(data proto.Message) error {
+func (t *TestGatherer) testHandler(data proto.Message, lk *mappings.LookupObjects) error {
 	t.result++
 	return nil
 }
