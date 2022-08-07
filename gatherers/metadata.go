@@ -2,6 +2,7 @@ package gatherers
 
 import (
 	"github.com/joeggg/mango/embedded"
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 )
@@ -29,7 +30,7 @@ func (mg *MetadataGatherer) GetResults() interface{} {
 	return mg.data
 }
 
-func (mg *MetadataGatherer) handleData(data proto.Message) error {
+func (mg *MetadataGatherer) handleData(data proto.Message, lk *mappings.LookupObjects) error {
 	mg.data = data.(*pb.CDOTAMatchMetadataFile)
 	return nil
 }

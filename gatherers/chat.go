@@ -2,6 +2,7 @@ package gatherers
 
 import (
 	"github.com/joeggg/mango/embedded"
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/pb"
 	"google.golang.org/protobuf/proto"
 )
@@ -47,22 +48,22 @@ func (cg *ChatGatherer) GetResults() interface{} {
 	return cg.GameMessages
 }
 
-func (cg *ChatGatherer) handleTick(data proto.Message) error {
+func (cg *ChatGatherer) handleTick(data proto.Message, lk *mappings.LookupObjects) error {
 	message := data.(*pb.CNETMsg_Tick)
-	cg.seconds = float64(message.GetTick())*1.0/30.0 - cg.timeOffset
+	cg.seconds = float64(message.GetTick())/30.0 - cg.timeOffset
 	return nil
 }
 
-func (cg *ChatGatherer) handleGameRules(data proto.Message) error {
+func (cg *ChatGatherer) handleGameRules(data proto.Message, lk *mappings.LookupObjects) error {
 	message := data.(*pb.CDOTAUserMsg_GamerulesStateChanged)
 	if message.GetState() == 10 {
-		cg.timeOffset = cg.seconds + 90
+		cg.timeOffset = cg.seconds
 		cg.seconds = -90
 	}
 	return nil
 }
 
-func (cg *ChatGatherer) handleChatMessage(data proto.Message) error {
+func (cg *ChatGatherer) handleChatMessage(data proto.Message, lk *mappings.LookupObjects) error {
 	message := data.(*pb.CDOTAUserMsg_ChatMessage)
 	id := int(message.GetSourcePlayerId())
 	cg.GameMessages[id] = append(
@@ -72,7 +73,7 @@ func (cg *ChatGatherer) handleChatMessage(data proto.Message) error {
 	return nil
 }
 
-func (cg *ChatGatherer) handleChatEvent(data proto.Message) error {
+func (cg *ChatGatherer) handleChatEvent(data proto.Message, lk *mappings.LookupObjects) error {
 	message := data.(*pb.CDOTAUserMsg_ChatEvent)
 	// Get all potential player IDs and remove unnused ones (== -1)
 	playerIds := []int32{
@@ -105,7 +106,7 @@ func (cg *ChatGatherer) handleChatEvent(data proto.Message) error {
 	return nil
 }
 
-func (cg *ChatGatherer) handleChatWheel(data proto.Message) error {
+func (cg *ChatGatherer) handleChatWheel(data proto.Message, lk *mappings.LookupObjects) error {
 	message := data.(*pb.CDOTAUserMsg_ChatWheel)
 	chatWheel := pb.EDOTAChatWheelMessage(message.GetChatMessageId()).String()
 	id := int(message.GetPlayerId())

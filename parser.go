@@ -3,6 +3,7 @@ package mango
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/golang/snappy"
 	"github.com/joeggg/mango/embedded"
 	"github.com/joeggg/mango/gatherers"
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/packet"
 	"google.golang.org/protobuf/proto"
 )
@@ -26,12 +28,14 @@ var (
 type ReplayParser struct {
 	file      *os.File
 	decoder   *embedded.EmbeddedDecoder
+	lookup    *mappings.LookupObjects
 	Gatherers map[string]embedded.Gatherer
 }
 
 func NewReplayParser() *ReplayParser {
 	return &ReplayParser{
 		decoder:   &embedded.EmbeddedDecoder{},
+		lookup:    mappings.NewLookupObjects(),
 		Gatherers: map[string]embedded.Gatherer{},
 	}
 }
@@ -56,7 +60,7 @@ func (rp *ReplayParser) Initialise(filename string) error {
 	rp.file = file
 	// Header handling
 	if data, _ := rp.readString(headerLength); data != header {
-		return errors.New("failed to read header")
+		return fmt.Errorf("failed to read header: %s", data)
 	}
 	return nil
 }
@@ -76,7 +80,7 @@ func (rp *ReplayParser) GetSummary() (proto.Message, error) {
 		return nil, err
 	} else if packet, err := rp.getPacket(); err != nil {
 		return nil, err
-	} else if err := packet.Parse(); err != nil {
+	} else if err := packet.Parse(rp.lookup); err != nil {
 		return nil, err
 	} else {
 		return packet.Message, nil
@@ -98,7 +102,7 @@ func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 			}
 			return packets, nil
 		}
-		err = p.Parse()
+		err = p.Parse(rp.lookup)
 		if err != nil {
 			return packets, err
 		}
@@ -108,7 +112,7 @@ func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 			if err != nil {
 				return packets, err
 			}
-			embed.Parse(rp.Gatherers)
+			embed.Parse(rp.Gatherers, rp.lookup)
 			p.Embed = embed
 		}
 		packets = append(packets, p)
@@ -116,7 +120,7 @@ func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 }
 
 /*
-	Return the results of all gatherers in one object, indexed by their names
+	Return the results of all gatherers in one map, indexed by their names
 */
 func (rp *ReplayParser) GetResults() map[string]interface{} {
 	results := map[string]interface{}{}
@@ -124,6 +128,17 @@ func (rp *ReplayParser) GetResults() map[string]interface{} {
 		results[name] = g.GetResults()
 	}
 	return results
+}
+
+/*
+	Return the results of the given gatherer, or nil if it doesn't exist
+*/
+func (rp *ReplayParser) GetResult(name string) interface{} {
+	g, ok := rp.Gatherers[name]
+	if !ok {
+		return nil
+	}
+	return g.GetResults()
 }
 
 func (rp *ReplayParser) getPacket() (*packet.Packet, error) {
