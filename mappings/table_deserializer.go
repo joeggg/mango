@@ -24,12 +24,12 @@ type Properties struct {
 	EncoderType *string
 }
 
-type Deserializer struct {
+type TableDeserializer struct {
 	serializer *pb.CSVCMsg_FlattenedSerializer
 	fields     []*Field
 }
 
-func (d *Deserializer) CreateFields() {
+func (d *TableDeserializer) CreateFields() {
 	for _, field := range d.serializer.GetFields() {
 		f := &Field{
 			Type: d.getSymbol(field.VarTypeSym),
@@ -53,7 +53,7 @@ func (d *Deserializer) CreateFields() {
 /*
 	Lookup symbol from a reference
 */
-func (d *Deserializer) getSymbol(num *int32) *string {
+func (d *TableDeserializer) getSymbol(num *int32) *string {
 	if num == nil {
 		return nil
 	}
