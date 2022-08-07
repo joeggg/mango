@@ -5,10 +5,10 @@ import (
 )
 
 type Field struct {
-	Type *string
-	Name *string
-	*SerializerId
-	*Properties
+	Type         *string
+	Name         *string
+	SerializerId *SerializerId
+	Properties   *Properties
 }
 
 type SerializerId struct {
@@ -26,7 +26,14 @@ type Properties struct {
 
 type TableDeserializer struct {
 	serializer *pb.CSVCMsg_FlattenedSerializer
-	fields     []*Field
+	Fields     []*Field
+}
+
+func NewTableDeserializer(s *pb.CSVCMsg_FlattenedSerializer) *TableDeserializer {
+	return &TableDeserializer{
+		serializer: s,
+		Fields:     []*Field{},
+	}
 }
 
 func (d *TableDeserializer) CreateFields() {
@@ -46,7 +53,7 @@ func (d *TableDeserializer) CreateFields() {
 				EncoderType: d.getSymbol(field.VarEncoderSym),
 			},
 		}
-		d.fields = append(d.fields, f)
+		d.Fields = append(d.Fields, f)
 	}
 }
 
