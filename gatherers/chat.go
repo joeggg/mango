@@ -7,6 +7,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type MessageSet struct {
+	Player   *pb.CGameInfo_CDotaGameInfo_CPlayerInfo
+	Messages []*Message
+}
+
 type Message struct {
 	Text string
 	Time float64
@@ -17,7 +22,7 @@ type ChatGatherer struct {
 	total        int
 	timeOffset   float64
 	seconds      float64
-	GameMessages map[int][]*Message
+	GameMessages map[int]*MessageSet
 }
 
 func NewChatGatherer() embedded.Gatherer {
@@ -31,9 +36,9 @@ func NewChatGatherer() embedded.Gatherer {
 	}
 	cg.total = 0
 	cg.timeOffset = 0
-	cg.GameMessages = map[int][]*Message{}
+	cg.GameMessages = make(map[int]*MessageSet)
 	for i := -1; i < 10; i++ {
-		cg.GameMessages[i] = []*Message{}
+		cg.GameMessages[i] = &MessageSet{nil, []*Message{}}
 	}
 	return cg
 }
@@ -66,9 +71,12 @@ func (cg *ChatGatherer) handleGameRules(data proto.Message, lk *mappings.LookupO
 func (cg *ChatGatherer) handleChatMessage(data proto.Message, lk *mappings.LookupObjects) error {
 	message := data.(*pb.CDOTAUserMsg_ChatMessage)
 	id := int(message.GetSourcePlayerId())
-	cg.GameMessages[id] = append(
-		cg.GameMessages[id], &Message{message.GetMessageText(), cg.seconds / 60},
-	)
+	player, ok := lk.Players[id]
+	if !ok {
+		return nil
+	}
+	cg.GameMessages[id].Player = player
+	cg.GameMessages[id].Messages = append(cg.GameMessages[id].Messages, &Message{message.GetMessageText(), cg.seconds / 60})
 	cg.total++
 	return nil
 }
@@ -90,16 +98,22 @@ func (cg *ChatGatherer) handleChatEvent(data proto.Message, lk *mappings.LookupO
 			i--
 		}
 	}
+
 	// Add message to store
 	if len(playerIds) > 0 {
 		for _, id := range playerIds {
-			cg.GameMessages[int(id)] = append(
-				cg.GameMessages[int(id)], &Message{message.GetType().String(), cg.seconds / 60},
+			messageSet, ok := cg.GameMessages[int(id)]
+			if !ok {
+				continue
+			}
+			messageSet.Messages = append(
+				messageSet.Messages,
+				&Message{message.GetType().String(), cg.seconds / 60},
 			)
 		}
 	} else {
-		cg.GameMessages[-1] = append(
-			cg.GameMessages[-1], &Message{message.GetType().String(), cg.seconds / 60},
+		cg.GameMessages[-1].Messages = append(
+			cg.GameMessages[-1].Messages, &Message{message.GetType().String(), cg.seconds / 60},
 		)
 	}
 	cg.total++
@@ -110,7 +124,14 @@ func (cg *ChatGatherer) handleChatWheel(data proto.Message, lk *mappings.LookupO
 	message := data.(*pb.CDOTAUserMsg_ChatWheel)
 	chatWheel := pb.EDOTAChatWheelMessage(message.GetChatMessageId()).String()
 	id := int(message.GetPlayerId())
-	cg.GameMessages[id] = append(cg.GameMessages[id], &Message{chatWheel, cg.seconds / 60})
+	player, ok := lk.Players[id]
+	if !ok {
+		return nil
+	}
+	cg.GameMessages[id].Player = player
+	cg.GameMessages[id].Messages = append(
+		cg.GameMessages[id].Messages, &Message{chatWheel, cg.seconds / 60},
+	)
 	cg.total++
 	return nil
 }

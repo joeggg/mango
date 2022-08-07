@@ -92,7 +92,14 @@ func (rp *ReplayParser) GetSummary() (proto.Message, error) {
 */
 func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 	var packets []*packet.Packet
-	rp.readBytes(headerLength) // Read past summary offset
+	// Get summary to fill out the player info for gatherers
+	if _, err := rp.GetSummary(); err != nil {
+		return packets, err
+	}
+	// Read past summary offset
+	if _, err := rp.file.Seek(int64(2*headerLength), 0); err != nil {
+		return packets, err
+	}
 	for {
 		// Get next packet and parse
 		p, err := rp.getPacket()
