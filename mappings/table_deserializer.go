@@ -24,15 +24,22 @@ type Properties struct {
 	EncoderType *string
 }
 
+type Serializer struct {
+	SerializerId *SerializerId
+	Fields       []*Field
+}
+
 type TableDeserializer struct {
-	serializer *pb.CSVCMsg_FlattenedSerializer
-	Fields     []*Field
+	serializer  *pb.CSVCMsg_FlattenedSerializer
+	Fields      []*Field
+	Serializers map[string]*Serializer
 }
 
 func NewTableDeserializer(s *pb.CSVCMsg_FlattenedSerializer) *TableDeserializer {
 	return &TableDeserializer{
-		serializer: s,
-		Fields:     []*Field{},
+		serializer:  s,
+		Fields:      []*Field{},
+		Serializers: make(map[string]*Serializer),
 	}
 }
 
@@ -54,6 +61,22 @@ func (d *TableDeserializer) CreateFields() {
 			},
 		}
 		d.Fields = append(d.Fields, f)
+	}
+	for _, serializer := range d.serializer.GetSerializers() {
+		s := &Serializer{
+			SerializerId: &SerializerId{
+				Name:    d.getSymbol(serializer.SerializerNameSym),
+				Version: serializer.SerializerVersion,
+			},
+			Fields: []*Field{},
+		}
+		for _, fieldIndex := range serializer.GetFieldsIndex() {
+			if int(fieldIndex) >= len(d.Fields) {
+				continue
+			}
+			s.Fields = append(s.Fields, d.Fields[fieldIndex])
+		}
+		d.Serializers[*s.SerializerId.Name] = s
 	}
 }
 
