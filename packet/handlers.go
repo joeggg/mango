@@ -1,97 +1,74 @@
 package packet
 
 import (
-	"encoding/json"
-	"os"
-
+	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/pb"
-	"github.com/joeggg/mango/sendtables"
 )
 
-var StringTables = map[string][]*pb.CDemoStringTablesItemsT{}
-var Players = map[int]string{}
-
 /*
 	Process a packet with embedded data
 */
-func HandleEmbedded(p *Packet) error {
+func handleEmbedded(p *Packet, lk *mappings.LookupObjects) error {
 	info := p.Message.(*pb.CDemoPacket)
 	p.RawEmbed = info.Data
 	return nil
 }
 
 /*
-	Process a packet with embedded data
+	Save raw summary info and create lookup of ID to player
 */
-func HandleFullEmbedded(p *Packet) error {
-	info := p.Message.(*pb.CDemoPacket)
-	p.RawEmbed = info.Data
-	return nil
-}
-
-func HandleFileInfo(p *Packet) error {
+func handleFileInfo(p *Packet, lk *mappings.LookupObjects) error {
 	info := p.Message.(*pb.CDemoFileInfo)
+	lk.Summary = info
 	players := info.GameInfo.Dota.PlayerInfo
 	for i, player := range players {
-		Players[i] = player.GetHeroName()
+		lk.Players[i] = player
 	}
-	Players[-1] = "no one"
+	lk.Players[-1] = nil
 	return nil
 }
 
 /*
-	Process a string tables packet by saving the tables and putting them into memory
+	Save string tables as map of table name to list of items
 */
-func HandleStringTables(p *Packet) error {
+func handleStringTables(p *Packet, lk *mappings.LookupObjects) error {
 	info := p.Message.(*pb.CDemoStringTables)
-	data, err := json.MarshalIndent(info, "", "  ")
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile("string_tables.json", data, 0755)
-	if err != nil {
-		return err
-	}
 	for _, table := range info.Tables {
-		StringTables[*table.TableName] = table.Items
+		lk.StringTables[*table.TableName] = table.Items
 	}
 	return nil
 }
 
-func HandleClassinfo(p *Packet) error {
+/*
+	Create class ID to network name map
+*/
+func handleClassinfo(p *Packet, lk *mappings.LookupObjects) error {
 	info := p.Message.(*pb.CDemoClassInfo)
-	data, err := json.MarshalIndent(info, "", "  ")
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile("class_info.json", data, 0755)
-	if err != nil {
-		return err
+	for _, class := range info.Classes {
+		lk.ClassInfo[int(class.GetClassId())] = class.GetNetworkName()
 	}
 	return nil
 }
 
-func HandleSendTables(p *Packet) error {
+/*
+	Decode send tables into flattened serialiser ..tbc..
+*/
+func handleSendTables(p *Packet, lk *mappings.LookupObjects) error {
 	info := p.Message.(*pb.CDemoSendTables)
-	decoder := sendtables.TableDecoder{}
+	decoder := mappings.TableDecoder{}
 	flat, err := decoder.Decode(info.Data)
 	if err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(flat, "", "  ")
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile("send_tables.json", data, 0755)
-	if err != nil {
-		return err
-	}
+	deserializer := mappings.NewTableDeserializer(flat)
+	deserializer.CreateFields()
+	lk.SendTables = deserializer
 	return err
 }
 
 /*
 	Placeholder for unimplemented message types
 */
-func HandlePlaceHolder(p *Packet) error {
+func handlePlaceHolder(p *Packet, lk *mappings.LookupObjects) error {
 	return nil
 }

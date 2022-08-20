@@ -1,4 +1,4 @@
-package sendtables
+package mappings
 
 import (
 	"bytes"
