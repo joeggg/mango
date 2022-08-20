@@ -7,7 +7,7 @@ type LookupObjects struct {
 	Players map[int]*pb.CGameInfo_CDotaGameInfo_CPlayerInfo
 
 	ClassInfo    map[int]string
-	SendTables   *pb.CSVCMsg_FlattenedSerializer
+	SendTables   *TableDeserializer
 	StringTables map[string][]*pb.CDemoStringTablesItemsT
 }
 

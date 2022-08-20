@@ -1,9 +1,6 @@
 package packet
 
 import (
-	"encoding/json"
-	"os"
-
 	"github.com/joeggg/mango/mappings"
 	"github.com/joeggg/mango/pb"
 )
@@ -63,14 +60,9 @@ func handleSendTables(p *Packet, lk *mappings.LookupObjects) error {
 	if err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(flat, "", "  ")
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile("send_tables.json", data, 0755)
-	if err != nil {
-		return err
-	}
+	deserializer := mappings.NewTableDeserializer(flat)
+	deserializer.CreateFields()
+	lk.SendTables = deserializer
 	return err
 }
 

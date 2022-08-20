@@ -28,14 +28,14 @@ var (
 type ReplayParser struct {
 	file      *os.File
 	decoder   *embedded.EmbeddedDecoder
-	lookup    *mappings.LookupObjects
+	Lookup    *mappings.LookupObjects
 	Gatherers map[string]embedded.Gatherer
 }
 
 func NewReplayParser() *ReplayParser {
 	return &ReplayParser{
 		decoder:   &embedded.EmbeddedDecoder{},
-		lookup:    mappings.NewLookupObjects(),
+		Lookup:    mappings.NewLookupObjects(),
 		Gatherers: map[string]embedded.Gatherer{},
 	}
 }
@@ -80,7 +80,7 @@ func (rp *ReplayParser) GetSummary() (proto.Message, error) {
 		return nil, err
 	} else if packet, err := rp.getPacket(); err != nil {
 		return nil, err
-	} else if err := packet.Parse(rp.lookup); err != nil {
+	} else if err := packet.Parse(rp.Lookup); err != nil {
 		return nil, err
 	} else {
 		return packet.Message, nil
@@ -109,7 +109,7 @@ func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 			}
 			return packets, nil
 		}
-		err = p.Parse(rp.lookup)
+		err = p.Parse(rp.Lookup)
 		if err != nil {
 			return packets, err
 		}
@@ -119,7 +119,7 @@ func (rp *ReplayParser) ParseReplay() ([]*packet.Packet, error) {
 			if err != nil {
 				return packets, err
 			}
-			embed.Parse(rp.Gatherers, rp.lookup)
+			embed.Parse(rp.Gatherers, rp.Lookup)
 			p.Embed = embed
 		}
 		packets = append(packets, p)
